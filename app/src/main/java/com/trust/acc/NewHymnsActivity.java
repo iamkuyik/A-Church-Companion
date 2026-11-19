@@ -217,9 +217,12 @@ public class NewHymnsActivity extends AppCompatActivity {
 				? ("Currently installed on this device: " + installed + " musical score(s).\n\n")
 				: "No musical score pack is installed yet.\n\n";
 		new AlertDialog.Builder(this)
-				.setTitle("Hymn & Musical Score Packs")
+				.setTitle("Hymn, Bible & Score Packs")
 				.setMessage(status
-						+ "Import any .acc hymn or musical score pack shared by your congregation or downloaded from GitHub Releases to unlock additional hymns and zoomable sheet-music scores offline.")
+						+ "Two independent .acc packs are supported (install either or both in any order):\n"
+						+ "• acc_hymns_and_bibles.acc — Full hymnals & 5-translation Holy Bible (~6 MB)\n"
+						+ "• acc_musical_scores.acc — 48 zoomable PDF musical scores (~32 MB)\n\n"
+						+ "Download from Releases or import a pack shared by your congregation.")
 				.setPositiveButton("Open Releases Page", (d, w) -> {
 					try {
 						Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(BuildConfig.SCORES_PACK_URL));

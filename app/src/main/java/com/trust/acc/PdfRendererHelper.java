@@ -91,17 +91,18 @@ public class PdfRendererHelper {
             int ph = Math.max(1, page.getHeight());
             float ratio = (float) ph / (float) pw;
 
-            // Render crisp score capped at 1800px wide using RGB_565 (halves RAM since parchment is opaque)
-            int hiResWidth = Math.min(1800, Math.max(960, (int) (targetWidth * 1.25f)));
+            // Android PdfRenderer.Page.render() strictly requires Bitmap.Config.ARGB_8888.
+            // Cap at 1800px wide for crisp pinch-to-zoom while keeping per-page memory bounded.
+            int hiResWidth = Math.min(1800, Math.max(1080, (int) (targetWidth * 1.35f)));
             int height = Math.max(1, Math.round(hiResWidth * ratio));
 
             Bitmap bitmap;
             try {
-                bitmap = Bitmap.createBitmap(hiResWidth, height, Bitmap.Config.RGB_565);
+                bitmap = Bitmap.createBitmap(hiResWidth, height, Bitmap.Config.ARGB_8888);
             } catch (OutOfMemoryError oom) {
                 int fallbackWidth = Math.max(720, hiResWidth / 2);
                 int fallbackHeight = Math.max(1, Math.round(fallbackWidth * ratio));
-                bitmap = Bitmap.createBitmap(fallbackWidth, fallbackHeight, Bitmap.Config.RGB_565);
+                bitmap = Bitmap.createBitmap(fallbackWidth, fallbackHeight, Bitmap.Config.ARGB_8888);
             }
             bitmap.eraseColor(PARCHMENT_PAPER_COLOR);
             page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY);

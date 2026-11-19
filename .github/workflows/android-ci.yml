@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   build:
-    name: Build & Publish ACC Open v1.4.0 APKs
+    name: Build & Publish ACC Open v1.4.1 APKs
     runs-on: ubuntu-latest
 
     steps:
@@ -35,38 +35,37 @@ jobs:
         run: |
           ./gradlew assembleRelease assembleDebug --no-daemon --stacktrace
           mkdir -p dist
-          cp app/build/outputs/apk/release/app-release.apk dist/ACC-Open-v1.4.0-release.apk
-          cp app/build/outputs/apk/debug/app-debug.apk dist/ACC-Open-v1.4.0-debug.apk
+          cp app/build/outputs/apk/release/app-release.apk dist/ACC-Open-v1.4.1-release.apk
+          cp app/build/outputs/apk/debug/app-debug.apk dist/ACC-Open-v1.4.1-debug.apk
           ls -lh dist/
 
       - name: Upload APK Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ACC-Open-v1.4.0-apks
+          name: ACC-Open-v1.4.1-apks
           path: |
-            dist/ACC-Open-v1.4.0-release.apk
-            dist/ACC-Open-v1.4.0-debug.apk
+            dist/ACC-Open-v1.4.1-release.apk
+            dist/ACC-Open-v1.4.1-debug.apk
           if-no-files-found: error
 
-      - name: Publish v1.4.0 GitHub Release
+      - name: Publish v1.4.1 GitHub Release
         if: github.event_name != 'pull_request'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.4.0
-          name: "v1.4.0 — Open-Source Public Release of A Church Companion (ACC Open)"
+          tag_name: v1.4.1
+          name: "v1.4.1 — Fixed PDF Score Rendering & Split .acc Pack Support"
           draft: false
           prerelease: false
           body: |
-            ## A Church Companion — Open Edition v1.4.0 (`com.trust.acc.open`, `versionCode 7`)
+            ## A Church Companion — Open Edition v1.4.1 (`com.trust.acc.open`, `versionCode 9`)
+
+            ### ✦ Key Fixes
+            - **Fixed blank musical score rendering:** Restored `Bitmap.Config.ARGB_8888` required by Android `PdfRenderer.Page.render()` (capped at 1800px + OOM fallback) and replaced `setImageBitmap(null)` with `setImageDrawable(null)` + 220dp loading placeholder in `PdfPageAdapter`.
+            - **Split `.acc` Pack Support:** Seamlessly import separate text/Bible packs (`acc_hymns_and_bibles.acc`) and PDF sheet-music packs (`acc_musical_scores.acc`) independently or in any order with automatic alphabetical sorting and deduplication.
 
             ### 📦 Downloadable APKs
-            - **`ACC-Open-v1.4.0-release.apk` (`com.trust.acc.open`)**: R8-minified, resource-shrunk release APK. Uses package ID `com.trust.acc.open` so it can be installed **side-by-side** alongside the congregation edition (`com.trust.acc`).
-            - **`ACC-Open-v1.4.0-debug.apk`**: Debug build for testing.
-
-            ### ✦ Highlights
-            - **Public-Domain Bilingual Holy Bible (`WITHOUT ROWID` SQLite)**: Efik (*Ŋwed Abasi*), King James Version (KJV), and Bible in Basic English (BBE) with Single & Parallel views.
-            - **Public-Domain Starter Hymnals & Extensible `.acc` Importer**: Classic Christian hymns, traditional *Ŋwed Ikwọ* Efik hymns, manual hymn creation, and streaming `.acc` / `.json` pack import & export for congregation hymnals and zoomable PDF musical scores.
-            - **Zero Network Permissions**: 100% offline-first with Sacred Editorial light/dark themes.
+            - **`ACC-Open-v1.4.1-release.apk`** (`com.trust.acc.open` — installs side-by-side alongside `com.trust.acc`)
+            - **`ACC-Open-v1.4.1-debug.apk`**
           files: |
-            dist/ACC-Open-v1.4.0-release.apk
-            dist/ACC-Open-v1.4.0-debug.apk
+            dist/ACC-Open-v1.4.1-release.apk
+            dist/ACC-Open-v1.4.1-debug.apk

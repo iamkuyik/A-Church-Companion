@@ -313,6 +313,10 @@ public class HymnRepository {
             }
         }
 
+        if (CATEGORY_NEW.equals(category)) {
+            merged.sort((a, b) -> getTitle(a).compareToIgnoreCase(getTitle(b)));
+        }
+
         for (HashMap<String, Object> item : merged) {
             enrichHymnMetadata(item);
         }
@@ -722,9 +726,11 @@ public class HymnRepository {
             }
 
             String jsonManifest = preferredJsonManifest != null ? preferredJsonManifest : fallbackJsonManifest;
-            if ((jsonManifest == null || jsonManifest.trim().isEmpty()) && !preview.hasBibleDatabase) {
+            if ((jsonManifest == null || jsonManifest.trim().isEmpty())
+                    && !preview.hasBibleDatabase
+                    && preview.stagedScoreFiles.isEmpty()) {
                 cleanupStaging(preview);
-                return HymnPackagePreview.failure("Package does not contain hymn or Bible data.");
+                return HymnPackagePreview.failure("Package does not contain hymn, musical score, or Bible data.");
             }
 
             if (preview.fileSize <= 0) {
@@ -763,9 +769,11 @@ public class HymnRepository {
             }
         }
 
-        if ((incomingHymns == null || incomingHymns.isEmpty()) && !preview.hasBibleDatabase) {
+        if ((incomingHymns == null || incomingHymns.isEmpty())
+                && !preview.hasBibleDatabase
+                && preview.stagedScoreFiles.isEmpty()) {
             cleanupStaging(preview);
-            return HymnPackagePreview.failure("No valid hymns or Bible database found in the selected file.");
+            return HymnPackagePreview.failure("No valid hymns, musical scores, or Bible database found in the selected file.");
         }
 
         if (preview.hasBibleDatabase) {

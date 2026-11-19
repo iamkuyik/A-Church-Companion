@@ -6,6 +6,7 @@ import android.graphics.ColorMatrixColorFilter;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.LruCache;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -46,7 +47,7 @@ public class PdfPageAdapter extends RecyclerView.Adapter<PdfPageAdapter.PageView
         }
 
         final int maxMemory = (int) (Runtime.getRuntime().maxMemory() / 1024);
-        final int cacheSize = Math.max(8192, maxMemory / 6);
+        final int cacheSize = Math.max(16384, maxMemory / 6);
         this.memoryCache = new LruCache<Integer, Bitmap>(cacheSize) {
             @Override
             protected int sizeOf(Integer key, Bitmap bitmap) {
@@ -84,13 +85,19 @@ public class PdfPageAdapter extends RecyclerView.Adapter<PdfPageAdapter.PageView
 
         Bitmap cached = memoryCache.get(position);
         if (cached != null) {
+            holder.itemView.setMinimumHeight(0);
             holder.binding.imgPage.setImageBitmap(cached);
             holder.binding.progressLoading.setVisibility(View.GONE);
             holder.binding.imgPage.setVisibility(View.VISIBLE);
             return;
         }
 
-        holder.binding.imgPage.setImageBitmap(null);
+        // Use setImageDrawable(null) (not setImageBitmap(null)) and a 220dp loading placeholder
+        // so RecyclerView doesn't bind all off-screen pages at once or draw a blank 1:1 square.
+        int placeholderPx = (int) TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP, 220, holder.itemView.getResources().getDisplayMetrics());
+        holder.itemView.setMinimumHeight(placeholderPx);
+        holder.binding.imgPage.setImageDrawable(null);
         holder.binding.progressLoading.setVisibility(View.VISIBLE);
 
         if (closed || helper == null) return;
@@ -106,6 +113,7 @@ public class PdfPageAdapter extends RecyclerView.Adapter<PdfPageAdapter.PageView
                     memoryCache.put(pos, bitmap);
                     mainHandler.post(() -> {
                         if (!closed && holder.currentPosition == pos) {
+                            holder.itemView.setMinimumHeight(0);
                             holder.binding.imgPage.setImageBitmap(bitmap);
                             holder.binding.progressLoading.setVisibility(View.GONE);
                             holder.binding.imgPage.setVisibility(View.VISIBLE);
