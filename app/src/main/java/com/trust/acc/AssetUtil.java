@@ -10,26 +10,32 @@ import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
- * Utility for safe, high-performance asset loading and SQLite scripture querying.
+ * Utility for safe, high-performance asset loading, dynamic Bible translation detection,
+ * and SQLite scripture querying.
  */
 public final class AssetUtil {
 
     private static final String BIBLE_DB_ASSET = "bible_bilingual.db";
     private static final String DB_META_PREFS = "bible_db_meta";
     private static final String KEY_EXTRACTED_DB_VERSION = "extracted_db_version";
-    /** Increment whenever bible_bilingual.db content/schema is updated in assets. */
+    private static final String KEY_IMPORTED_BIBLE_PACK = "imported_bible_pack";
+    /** Increment whenever bundled bible_bilingual.db content/schema is updated in assets. */
     private static final int CURRENT_BIBLE_DB_VERSION = 3;
 
     private static volatile SQLiteDatabase cachedBibleDb = null;
+    private static volatile Set<String> cachedAvailableColumns = null;
     private static volatile ArrayList<HashMap<String, Object>> cachedBibleBooks = null;
     private static final Object BOOKS_LOCK = new Object();
     private static final ReentrantReadWriteLock DB_LOCK = new ReentrantReadWriteLock();
@@ -112,8 +118,11 @@ public final class AssetUtil {
 
         SharedPreferences metaPrefs = appCtx.getSharedPreferences(DB_META_PREFS, Context.MODE_PRIVATE);
         int extractedVersion = metaPrefs.getInt(KEY_EXTRACTED_DB_VERSION, 0);
+        boolean hasImportedBiblePack = metaPrefs.getBoolean(KEY_IMPORTED_BIBLE_PACK, false);
 
-        if (!dbFile.exists() || dbFile.length() == 0 || extractedVersion != CURRENT_BIBLE_DB_VERSION) {
+        // Do not overwrite a user-imported full 5-translation Bible database unless dbFile is missing
+        if (!dbFile.exists() || dbFile.length() == 0
+                || (!hasImportedBiblePack && extractedVersion != CURRENT_BIBLE_DB_VERSION)) {
             File tempFile = new File(parentDir, BIBLE_DB_ASSET + ".tmp");
             boolean renamed = false;
             try {
@@ -127,7 +136,6 @@ public final class AssetUtil {
                     fos.flush();
                 }
 
-                // Atomically replace target DB; on POSIX rename overwrites existing file safely
                 renamed = tempFile.renameTo(dbFile);
                 if (!renamed) {
                     if (dbFile.exists() && !dbFile.delete()) {
@@ -138,7 +146,10 @@ public final class AssetUtil {
                 if (!renamed) {
                     throw new IOException("Failed to move extracted Bible database into place.");
                 }
-                metaPrefs.edit().putInt(KEY_EXTRACTED_DB_VERSION, CURRENT_BIBLE_DB_VERSION).apply();
+                metaPrefs.edit()
+                        .putInt(KEY_EXTRACTED_DB_VERSION, CURRENT_BIBLE_DB_VERSION)
+                        .putBoolean(KEY_IMPORTED_BIBLE_PACK, false)
+                        .apply();
             } finally {
                 if (!renamed && tempFile.exists()) {
                     tempFile.delete();
@@ -151,36 +162,174 @@ public final class AssetUtil {
                 null,
                 SQLiteDatabase.OPEN_READONLY | SQLiteDatabase.NO_LOCALIZED_COLLATORS
         );
+        cachedAvailableColumns = inspectVerseColumns(cachedBibleDb);
         return cachedBibleDb;
+    }
+
+    private static Set<String> inspectVerseColumns(SQLiteDatabase db) {
+        Set<String> cols = new HashSet<>();
+        try (Cursor c = db.rawQuery("PRAGMA table_info(verses)", null)) {
+            while (c.moveToNext()) {
+                String name = c.getString(1);
+                if (name != null) {
+                    cols.add(name.toLowerCase());
+                }
+            }
+        } catch (Exception ignored) {}
+        return cols;
+    }
+
+    /**
+     * Returns whether a specific Bible translation column (e.g., "niv", "rsv", "kjv", "bbe", "efi")
+     * is present in the currently installed SQLite database.
+     */
+    public static boolean hasTranslationColumn(Context context, String columnId) {
+        if (columnId == null) return false;
+        Set<String> cols = cachedAvailableColumns;
+        if (cols == null) {
+            DB_LOCK.writeLock().lock();
+            try {
+                ensureBibleDatabaseLocked(context);
+                cols = cachedAvailableColumns;
+            } catch (Exception ignored) {
+            } finally {
+                DB_LOCK.writeLock().unlock();
+            }
+        }
+        return cols != null && cols.contains(columnId.toLowerCase());
+    }
+
+    /**
+     * Validates and installs an imported Bible SQLite database from an .acc pack,
+     * unlocking all translations present in the pack (such as NIV and RSV).
+     */
+    public static boolean installImportedBibleDatabase(Context context, File stagedDbFile) {
+        if (stagedDbFile == null || !stagedDbFile.exists() || stagedDbFile.length() < 1024 * 1024) {
+            return false;
+        }
+        // Validate SQLite schema before installing
+        try (SQLiteDatabase testDb = SQLiteDatabase.openDatabase(
+                stagedDbFile.getAbsolutePath(), null, SQLiteDatabase.OPEN_READONLY)) {
+            Set<String> cols = inspectVerseColumns(testDb);
+            if (!cols.contains("efi") || !cols.contains("kjv")) {
+                return false;
+            }
+        } catch (Exception e) {
+            return false;
+        }
+
+        DB_LOCK.writeLock().lock();
+        try {
+            if (cachedBibleDb != null) {
+                try {
+                    cachedBibleDb.close();
+                } catch (Exception ignored) {}
+                cachedBibleDb = null;
+                cachedAvailableColumns = null;
+            }
+
+            Context appCtx = context.getApplicationContext();
+            File dbFile = appCtx.getDatabasePath(BIBLE_DB_ASSET);
+            File parentDir = dbFile.getParentFile();
+            if (parentDir != null && !parentDir.exists()) {
+                parentDir.mkdirs();
+            }
+
+            File tempFile = new File(parentDir, BIBLE_DB_ASSET + ".import.tmp");
+            try (InputStream in = new FileInputStream(stagedDbFile);
+                 FileOutputStream out = new FileOutputStream(tempFile)) {
+                byte[] buf = new byte[16384];
+                int len;
+                while ((len = in.read(buf)) != -1) {
+                    out.write(buf, 0, len);
+                }
+                out.flush();
+            }
+
+            if (dbFile.exists()) {
+                dbFile.delete();
+            }
+            if (!tempFile.renameTo(dbFile)) {
+                if (tempFile.exists()) tempFile.delete();
+                return false;
+            }
+
+            SharedPreferences metaPrefs = appCtx.getSharedPreferences(DB_META_PREFS, Context.MODE_PRIVATE);
+            metaPrefs.edit()
+                    .putBoolean(KEY_IMPORTED_BIBLE_PACK, true)
+                    .putInt(KEY_EXTRACTED_DB_VERSION, CURRENT_BIBLE_DB_VERSION)
+                    .apply();
+
+            ensureBibleDatabaseLocked(appCtx);
+            return true;
+        } catch (Exception e) {
+            return false;
+        } finally {
+            DB_LOCK.writeLock().unlock();
+        }
+    }
+
+    /**
+     * Reverts any imported Bible database back to the factory bundled asset database.
+     */
+    public static void resetImportedBibleDatabase(Context context) {
+        DB_LOCK.writeLock().lock();
+        try {
+            if (cachedBibleDb != null) {
+                try {
+                    cachedBibleDb.close();
+                } catch (Exception ignored) {}
+                cachedBibleDb = null;
+                cachedAvailableColumns = null;
+            }
+            Context appCtx = context.getApplicationContext();
+            SharedPreferences metaPrefs = appCtx.getSharedPreferences(DB_META_PREFS, Context.MODE_PRIVATE);
+            metaPrefs.edit()
+                    .putBoolean(KEY_IMPORTED_BIBLE_PACK, false)
+                    .putInt(KEY_EXTRACTED_DB_VERSION, 0)
+                    .apply();
+            File dbFile = appCtx.getDatabasePath(BIBLE_DB_ASSET);
+            if (dbFile.exists()) {
+                dbFile.delete();
+            }
+        } finally {
+            DB_LOCK.writeLock().unlock();
+        }
     }
 
     /**
      * Queries a single chapter's verses (<1ms) from the WITHOUT ROWID primary-key-ordered
-     * SQLite Bible database. Protected by a ReadWriteLock so memory-trim closes never race
-     * with in-flight queries.
+     * SQLite Bible database, dynamically reading whichever translation columns exist.
      */
     public static ArrayList<HashMap<String, Object>> getChapterVerses(Context context, int targetBook, int targetChapter) throws Exception {
         DB_LOCK.readLock().lock();
         try {
             SQLiteDatabase db = cachedBibleDb;
-            if (db == null || !db.isOpen()) {
+            if (db == null || !db.isOpen() || cachedAvailableColumns == null) {
                 DB_LOCK.readLock().unlock();
                 DB_LOCK.writeLock().lock();
                 try {
                     db = ensureBibleDatabaseLocked(context);
-                    // Downgrade write lock to read lock before querying
                     DB_LOCK.readLock().lock();
                 } finally {
                     DB_LOCK.writeLock().unlock();
                 }
             }
 
+            Set<String> cols = cachedAvailableColumns;
+            boolean hasRsv = cols != null && cols.contains("rsv");
+            boolean hasNiv = cols != null && cols.contains("niv");
+
+            String sql = (hasRsv && hasNiv)
+                    ? "SELECT verse, efi, kjv, bbe, rsv, niv FROM verses WHERE book = ? AND chapter = ? ORDER BY verse ASC"
+                    : "SELECT verse, efi, kjv, bbe FROM verses WHERE book = ? AND chapter = ? ORDER BY verse ASC";
+
             ArrayList<HashMap<String, Object>> verses = new ArrayList<>();
             try (Cursor cursor = db.rawQuery(
-                    "SELECT verse, efi, kjv, bbe FROM verses WHERE book = ? AND chapter = ? ORDER BY verse ASC",
+                    sql,
                     new String[]{String.valueOf(targetBook), String.valueOf(targetChapter)})) {
                 while (cursor.moveToNext()) {
-                    HashMap<String, Object> vMap = new HashMap<>(6);
+                    HashMap<String, Object> vMap = new HashMap<>(8);
                     int verseNum = cursor.getInt(0);
                     String efi = cursor.isNull(1) ? "" : cursor.getString(1);
                     String kjv = cursor.isNull(2) ? "" : cursor.getString(2);
@@ -190,6 +339,12 @@ public final class AssetUtil {
                     vMap.put("efi", efi);
                     vMap.put("kjv", kjv);
                     vMap.put("bbe", bbe);
+                    if (hasRsv && hasNiv) {
+                        String rsv = cursor.isNull(4) ? "" : cursor.getString(4);
+                        String niv = cursor.isNull(5) ? "" : cursor.getString(5);
+                        vMap.put("rsv", rsv);
+                        vMap.put("niv", niv);
+                    }
                     vMap.put("en", kjv);
                     verses.add(vMap);
                 }
@@ -211,6 +366,7 @@ public final class AssetUtil {
                     cachedBibleDb.close();
                 } catch (Exception ignored) {}
                 cachedBibleDb = null;
+                cachedAvailableColumns = null;
             }
         } finally {
             DB_LOCK.writeLock().unlock();

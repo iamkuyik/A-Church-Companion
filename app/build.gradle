@@ -16,7 +16,7 @@ android {
 		namespace "com.trust.acc"
 		minSdk 26
 		targetSdk 34
-		versionCode 7
+		versionCode 8
 		versionName "1.4.0"
 		vectorDrawables.useSupportLibrary = true
 		buildConfigField "boolean", "ENABLE_SHEET_MUSIC", "true"

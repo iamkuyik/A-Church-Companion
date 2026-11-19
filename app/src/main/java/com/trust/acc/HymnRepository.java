@@ -38,7 +38,7 @@ import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 /**
- * Central repository managing built-in hymnals and dynamic, streaming hymn & musical score packs.
+ * Central repository managing built-in hymnals and dynamic, streaming hymn, score & Bible packs.
  */
 public class HymnRepository {
 
@@ -55,15 +55,14 @@ public class HymnRepository {
     private static final String SCORES_DIR = "scores_imported";
 
     // Safety caps against Zip Bombs and unbounded memory allocation
-    private static final int MAX_ZIP_ENTRIES = 500;
-    private static final long MAX_TOTAL_UNCOMPRESSED_BYTES = 160L * 1024L * 1024L; // 160 MB
-    private static final long MAX_JSON_MANIFEST_BYTES = 16L * 1024L * 1024L;     // 16 MB
+    private static final int MAX_ZIP_ENTRIES = 600;
+    private static final long MAX_TOTAL_UNCOMPRESSED_BYTES = 220L * 1024L * 1024L; // 220 MB (supports full Bible DB + PDFs)
+    private static final long MAX_JSON_MANIFEST_BYTES = 16L * 1024L * 1024L;       // 16 MB
 
     private static volatile HymnRepository sInstance;
     private final Context mContext;
     private final Gson mGson = new Gson();
 
-    // Cache merged lists and known asset PDF names in memory
     private final Map<String, ArrayList<HashMap<String, Object>>> mMergedCache = new HashMap<>();
     private Set<String> mAssetPdfCache = null;
 
@@ -115,13 +114,14 @@ public class HymnRepository {
         public int newHymnsCount = 0;
         public int updatedHymnsCount = 0;
         public int scoresCount = 0;
+        public boolean hasBibleDatabase = false;
         public String targetCategory = CATEGORY_NEW;
         public List<HymnPreviewItem> items = new ArrayList<>();
 
-        // Staged payload to commit upon user confirmation (PDFs staged on disk, not RAM!)
         Map<String, ArrayList<HashMap<String, Object>>> toSave = new HashMap<>();
         File stagingDir = null;
         Map<String, File> stagedScoreFiles = new HashMap<>();
+        File stagedBibleDbFile = null;
 
         public static HymnPackagePreview failure(String error) {
             HymnPackagePreview p = new HymnPackagePreview();
@@ -136,6 +136,7 @@ public class HymnRepository {
         public int importedCount;
         public int updatedCount;
         public int scoresCount;
+        public boolean bibleUpdated;
         public String message;
         public List<String> hymnTitles = new ArrayList<>();
 
@@ -145,9 +146,6 @@ public class HymnRepository {
         }
     }
 
-    /**
-     * Normalizes a zip/file entry name safely against both POSIX ('/') and Windows ('\') path traversal.
-     */
     private static String sanitizeFileName(String rawName) {
         if (rawName == null) return "";
         String normalized = rawName.replace('\\', '/');
@@ -171,10 +169,20 @@ public class HymnRepository {
     }
 
     /**
-     * Resolves the actual PDF file path or asset identifier for a given hymn.
-     * If the PDF was imported into internal storage, returns its absolute path on disk.
-     * Otherwise returns the original asset name.
+     * Strips any leading hymn number prefix (e.g. "43. Blessed Assurance" -> "blessed assurance")
+     * so renumbered starter lists and full 738-hymn packs match cleanly without duplicate titles.
      */
+    private static String normalizeCleanTitleKey(String fullTitle) {
+        if (fullTitle == null) return "";
+        String t = fullTitle.trim();
+        java.util.regex.Matcher m = EfikHymnsActivity.HYMN_NUM_PATTERN.matcher(t);
+        if (m.find()) {
+            t = m.group(2).trim();
+        }
+        t = t.replace('’', '\'').replace('‘', '\'');
+        return t.toLowerCase(Locale.ROOT);
+    }
+
     public String resolvePdfPath(String pdfName) {
         if (pdfName == null || pdfName.trim().isEmpty()) {
             return "";
@@ -195,10 +203,6 @@ public class HymnRepository {
         return pdfName;
     }
 
-    /**
-     * Checks whether a hymn's musical score PDF is actually available locally
-     * (either imported in internal storage or bundled in APK assets).
-     */
     public synchronized boolean hasPdfAvailable(String pdfName) {
         if (pdfName == null || pdfName.trim().isEmpty()) return false;
         File directFile = new File(pdfName);
@@ -229,9 +233,6 @@ public class HymnRepository {
         return mAssetPdfCache.contains(safeName);
     }
 
-    /**
-     * Returns the number of imported musical score PDFs installed on this device.
-     */
     public int getImportedScoresCount() {
         File scoresDir = new File(mContext.getFilesDir(), SCORES_DIR);
         File[] files = scoresDir.listFiles((dir, name) -> name.toLowerCase(Locale.ROOT).endsWith(".pdf"));
@@ -240,6 +241,8 @@ public class HymnRepository {
 
     /**
      * Retrieves the merged hymnal list for a given category (built-in + imported).
+     * When a full congregation pack is imported (e.g., 700+ SoC hymns or 50+ New hymns),
+     * the full pack becomes the authoritative ordered list so hymn numbers match 0..733 cleanly.
      */
     public synchronized ArrayList<HashMap<String, Object>> getHymns(String category) {
         category = sanitizeCategory(category, CATEGORY_NEW);
@@ -250,33 +253,63 @@ public class HymnRepository {
         ArrayList<HashMap<String, Object>> baseList = loadBaseHymns(category);
         ArrayList<HashMap<String, Object>> customList = loadCustomHymns(category);
 
-        ArrayList<HashMap<String, Object>> merged = new ArrayList<>(baseList.size() + customList.size());
-        Map<String, Integer> titleIndexMap = new HashMap<>(baseList.size() * 2);
+        ArrayList<HashMap<String, Object>> merged;
 
-        for (HashMap<String, Object> baseItem : baseList) {
-            String key = getTitle(baseItem).toLowerCase(Locale.ROOT);
-            if (!key.isEmpty()) {
-                titleIndexMap.put(key, merged.size());
+        if (customList.size() >= baseList.size() && customList.size() >= 45) {
+            // Full hymnal pack imported (e.g., 738 SoC or 55 New): use customList order as authoritative base
+            merged = new ArrayList<>(customList.size() + 16);
+            Set<String> coveredCleanTitles = new HashSet<>(customList.size() * 2);
+            for (HashMap<String, Object> item : customList) {
+                merged.add(item);
+                String exactKey = getTitle(item).toLowerCase(Locale.ROOT);
+                String cleanKey = normalizeCleanTitleKey(getTitle(item));
+                if (!exactKey.isEmpty()) coveredCleanTitles.add(exactKey);
+                if (!cleanKey.isEmpty()) coveredCleanTitles.add(cleanKey);
             }
-            merged.add(baseItem);
-        }
+            // Append any built-in hymns not already present in the full pack
+            for (HashMap<String, Object> baseItem : baseList) {
+                String exactKey = getTitle(baseItem).toLowerCase(Locale.ROOT);
+                String cleanKey = normalizeCleanTitleKey(getTitle(baseItem));
+                if (!coveredCleanTitles.contains(exactKey) && !coveredCleanTitles.contains(cleanKey)) {
+                    merged.add(baseItem);
+                }
+            }
+        } else {
+            merged = new ArrayList<>(baseList.size() + customList.size());
+            Map<String, Integer> titleIndexMap = new HashMap<>(baseList.size() * 2);
+            Map<String, Integer> cleanTitleIndexMap = new HashMap<>(baseList.size() * 2);
 
-        for (HashMap<String, Object> customItem : customList) {
-            String key = getTitle(customItem).toLowerCase(Locale.ROOT);
-            Integer matchIndex = !key.isEmpty() ? titleIndexMap.get(key) : null;
-            if (matchIndex != null) {
-                // Preserve built-in PDF_File if custom entry did not override it
-                HashMap<String, Object> existing = merged.get(matchIndex);
-                Object customPdf = customItem.get("PDF_File");
-                if ((customPdf == null || customPdf.toString().trim().isEmpty()) && existing.get("PDF_File") != null) {
-                    customItem.put("PDF_File", existing.get("PDF_File"));
+            for (HashMap<String, Object> baseItem : baseList) {
+                String exactKey = getTitle(baseItem).toLowerCase(Locale.ROOT);
+                String cleanKey = normalizeCleanTitleKey(getTitle(baseItem));
+                int idx = merged.size();
+                if (!exactKey.isEmpty()) titleIndexMap.put(exactKey, idx);
+                if (!cleanKey.isEmpty() && !cleanTitleIndexMap.containsKey(cleanKey)) {
+                    cleanTitleIndexMap.put(cleanKey, idx);
                 }
-                merged.set(matchIndex, customItem);
-            } else {
-                if (!key.isEmpty()) {
-                    titleIndexMap.put(key, merged.size());
+                merged.add(baseItem);
+            }
+
+            for (HashMap<String, Object> customItem : customList) {
+                String exactKey = getTitle(customItem).toLowerCase(Locale.ROOT);
+                String cleanKey = normalizeCleanTitleKey(getTitle(customItem));
+                Integer matchIndex = !exactKey.isEmpty() ? titleIndexMap.get(exactKey) : null;
+                if (matchIndex == null && !cleanKey.isEmpty()) {
+                    matchIndex = cleanTitleIndexMap.get(cleanKey);
                 }
-                merged.add(customItem);
+                if (matchIndex != null) {
+                    HashMap<String, Object> existing = merged.get(matchIndex);
+                    Object customPdf = customItem.get("PDF_File");
+                    if ((customPdf == null || customPdf.toString().trim().isEmpty()) && existing.get("PDF_File") != null) {
+                        customItem.put("PDF_File", existing.get("PDF_File"));
+                    }
+                    merged.set(matchIndex, customItem);
+                } else {
+                    int idx = merged.size();
+                    if (!exactKey.isEmpty()) titleIndexMap.put(exactKey, idx);
+                    if (!cleanKey.isEmpty()) cleanTitleIndexMap.put(cleanKey, idx);
+                    merged.add(customItem);
+                }
             }
         }
 
@@ -337,9 +370,6 @@ public class HymnRepository {
         return results;
     }
 
-    /**
-     * Pre-computes normalized search indices and parsed hymn numbers/titles once at load time.
-     */
     private void enrichHymnMetadata(HashMap<String, Object> item) {
         if (item == null || item.containsKey("_norm_search")) return;
         String fullTitle = getTitle(item);
@@ -418,9 +448,6 @@ public class HymnRepository {
         }
     }
 
-    /**
-     * Loads custom/imported hymns stored in internal app storage.
-     */
     public synchronized ArrayList<HashMap<String, Object>> loadCustomHymns(String category) {
         category = sanitizeCategory(category, CATEGORY_NEW);
         try {
@@ -433,9 +460,6 @@ public class HymnRepository {
         }
     }
 
-    /**
-     * Persists custom hymns atomically in UTF-8 via temp file + rename and invalidates caches.
-     */
     private synchronized boolean saveCustomHymns(String category, ArrayList<HashMap<String, Object>> items) {
         category = sanitizeCategory(category, CATEGORY_NEW);
         File file = new File(mContext.getFilesDir(), CUSTOM_HYMNS_FILE);
@@ -454,7 +478,6 @@ public class HymnRepository {
             store = new HashMap<>();
         }
 
-        // Strip transient computed keys before persisting
         ArrayList<HashMap<String, Object>> cleanItems = new ArrayList<>(items.size());
         for (HashMap<String, Object> item : items) {
             HashMap<String, Object> copy = new HashMap<>();
@@ -493,9 +516,6 @@ public class HymnRepository {
         }
     }
 
-    /**
-     * Adds or updates a single hymn manually, preserving any existing attached PDF_File if none is provided.
-     */
     public synchronized boolean addOrUpdateHymn(String category, String title, String lyrics, String pdfFileName) {
         if (title == null || title.trim().isEmpty()) return false;
         category = sanitizeCategory(category, CATEGORY_NEW);
@@ -503,7 +523,6 @@ public class HymnRepository {
         String trimmedTitle = title.trim();
         String resolvedPdf = pdfFileName != null ? pdfFileName.trim() : "";
 
-        // Preserve existing attached score (from custom or built-in list) if editing lyrics only
         if (resolvedPdf.isEmpty()) {
             ArrayList<HashMap<String, Object>> merged = getHymns(category);
             int mergedIdx = findMatchingHymnIndex(merged, trimmedTitle);
@@ -531,10 +550,6 @@ public class HymnRepository {
         return saveCustomHymns(category, customList);
     }
 
-    /**
-     * Inspects a hymn/score package (.acc / .zip / .json) using streaming I/O so large score packs
-     * (30+ MB) never trigger OutOfMemoryError.
-     */
     public HymnPackagePreview inspectPackage(Uri uri) {
         String fileName = "hymn_package";
         long fileSize = 0;
@@ -578,9 +593,6 @@ public class HymnRepository {
         }
     }
 
-    /**
-     * Streams a ZIP (.acc/.hymn) or plain JSON input stream safely with Zip-Bomb & Zip-Slip guards.
-     */
     public HymnPackagePreview inspectStream(InputStream rawStream, String fileName, long fileSize) {
         HymnPackagePreview preview = new HymnPackagePreview();
         preview.fileName = (fileName != null && !fileName.trim().isEmpty()) ? fileName : "hymn_package";
@@ -605,7 +617,7 @@ public class HymnRepository {
                 && header[0] == 0x50 && header[1] == 0x4B
                 && header[2] == 0x03 && header[3] == 0x04);
 
-        List<HashMap<String, Object>> incomingHymns;
+        List<HashMap<String, Object>> incomingHymns = new ArrayList<>();
 
         if (isZip) {
             boolean isApk = false;
@@ -677,6 +689,25 @@ public class HymnRepository {
                             }
                         }
                         preview.stagedScoreFiles.put(safeName, outFile);
+                    } else if (lowerName.equals("bible_bilingual.db") || lowerName.endsWith(".db")) {
+                        File outFile = new File(stagingDir, "bible_bilingual.db");
+                        if (!outFile.getCanonicalPath().startsWith(canonicalStaging)) {
+                            cleanupStaging(preview);
+                            return HymnPackagePreview.failure("Invalid database path in package.");
+                        }
+                        try (FileOutputStream fos = new FileOutputStream(outFile)) {
+                            int len;
+                            while ((len = zis.read(buf)) != -1) {
+                                totalExtracted += len;
+                                if (totalExtracted > MAX_TOTAL_UNCOMPRESSED_BYTES) {
+                                    cleanupStaging(preview);
+                                    return HymnPackagePreview.failure("Package exceeds maximum uncompressed size limit.");
+                                }
+                                fos.write(buf, 0, len);
+                            }
+                        }
+                        preview.stagedBibleDbFile = outFile;
+                        preview.hasBibleDatabase = true;
                     }
                     zis.closeEntry();
                 }
@@ -691,23 +722,24 @@ public class HymnRepository {
             }
 
             String jsonManifest = preferredJsonManifest != null ? preferredJsonManifest : fallbackJsonManifest;
-            if (jsonManifest == null || jsonManifest.trim().isEmpty()) {
+            if ((jsonManifest == null || jsonManifest.trim().isEmpty()) && !preview.hasBibleDatabase) {
                 cleanupStaging(preview);
-                return HymnPackagePreview.failure("Package does not contain hymn data (hymns.json missing).");
+                return HymnPackagePreview.failure("Package does not contain hymn or Bible data.");
             }
 
             if (preview.fileSize <= 0) {
                 preview.fileSize = totalExtracted;
             }
 
-            try {
-                incomingHymns = parseHymnsJson(jsonManifest);
-            } catch (Exception e) {
-                cleanupStaging(preview);
-                return HymnPackagePreview.failure("Failed parsing package manifest: " + e.getMessage());
+            if (jsonManifest != null && !jsonManifest.trim().isEmpty()) {
+                try {
+                    incomingHymns = parseHymnsJson(jsonManifest);
+                } catch (Exception e) {
+                    cleanupStaging(preview);
+                    return HymnPackagePreview.failure("Failed parsing package manifest: " + e.getMessage());
+                }
             }
         } else {
-            // Plain JSON format (bounded to MAX_JSON_MANIFEST_BYTES)
             try {
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 byte[] buf = new byte[8192];
@@ -731,13 +763,23 @@ public class HymnRepository {
             }
         }
 
-        if (incomingHymns == null || incomingHymns.isEmpty()) {
+        if ((incomingHymns == null || incomingHymns.isEmpty()) && !preview.hasBibleDatabase) {
             cleanupStaging(preview);
-            return HymnPackagePreview.failure("No valid hymns found in the selected file.");
+            return HymnPackagePreview.failure("No valid hymns or Bible database found in the selected file.");
         }
 
-        // Categorize and build preview items with O(1) title sets (no repeated JSON parsing inside loop!)
+        if (preview.hasBibleDatabase) {
+            preview.items.add(new HymnPreviewItem(
+                    "Holy Bible Database (5 Translations: Efik, KJV, RSV, BBE, NIV)",
+                    "bible",
+                    true,
+                    false,
+                    "Upgrades offline Bible database with all 5 translations"
+            ));
+        }
+
         Map<String, ArrayList<HashMap<String, Object>>> toSave = new HashMap<>();
+        Map<String, Map<String, Integer>> customTitleIndexByCat = new HashMap<>();
         Map<String, Set<String>> baseTitleSets = new HashMap<>();
 
         for (HashMap<String, Object> hymn : incomingHymns) {
@@ -746,35 +788,65 @@ public class HymnRepository {
             hymn.put("category", cat);
 
             if (!toSave.containsKey(cat)) {
-                toSave.put(cat, loadCustomHymns(cat));
+                ArrayList<HashMap<String, Object>> existingCustom = loadCustomHymns(cat);
+                toSave.put(cat, existingCustom);
+                Map<String, Integer> idxMap = new HashMap<>(existingCustom.size() * 2 + 16);
+                for (int i = 0; i < existingCustom.size(); i++) {
+                    String t = getTitle(existingCustom.get(i));
+                    String exact = t.toLowerCase(Locale.ROOT);
+                    String clean = normalizeCleanTitleKey(t);
+                    if (!exact.isEmpty()) idxMap.put(exact, i);
+                    if (!clean.isEmpty() && !idxMap.containsKey(clean)) idxMap.put(clean, i);
+                }
+                customTitleIndexByCat.put(cat, idxMap);
             }
             if (!baseTitleSets.containsKey(cat)) {
                 Set<String> titles = new HashSet<>();
                 for (HashMap<String, Object> baseItem : loadBaseHymns(cat)) {
-                    String bt = getTitle(baseItem).toLowerCase(Locale.ROOT);
-                    if (!bt.isEmpty()) titles.add(bt);
+                    String bt = getTitle(baseItem);
+                    String exact = bt.toLowerCase(Locale.ROOT);
+                    String clean = normalizeCleanTitleKey(bt);
+                    if (!exact.isEmpty()) titles.add(exact);
+                    if (!clean.isEmpty()) titles.add(clean);
                 }
                 baseTitleSets.put(cat, titles);
             }
 
             ArrayList<HashMap<String, Object>> targetList = toSave.get(cat);
+            Map<String, Integer> customIdxMap = customTitleIndexByCat.get(cat);
+            Set<String> baseSet = baseTitleSets.get(cat);
+
             String title = getTitle(hymn);
-            int matchIndex = findMatchingHymnIndex(targetList, title);
-            boolean isUpdate = (matchIndex >= 0) || baseTitleSets.get(cat).contains(title.toLowerCase(Locale.ROOT));
+            String exactKey = title.toLowerCase(Locale.ROOT);
+            String cleanKey = normalizeCleanTitleKey(title);
+
+            Integer matchIndex = customIdxMap.get(exactKey);
+            if (matchIndex == null && !cleanKey.isEmpty()) {
+                matchIndex = customIdxMap.get(cleanKey);
+            }
+
+            boolean isUpdate = (matchIndex != null)
+                    || baseSet.contains(exactKey)
+                    || (!cleanKey.isEmpty() && baseSet.contains(cleanKey));
 
             if (isUpdate) {
                 preview.updatedHymnsCount++;
-                if (matchIndex >= 0) {
+                if (matchIndex != null) {
                     targetList.set(matchIndex, hymn);
                 } else {
+                    int newIdx = targetList.size();
                     targetList.add(hymn);
+                    if (!exactKey.isEmpty()) customIdxMap.put(exactKey, newIdx);
+                    if (!cleanKey.isEmpty()) customIdxMap.put(cleanKey, newIdx);
                 }
             } else {
                 preview.newHymnsCount++;
+                int newIdx = targetList.size();
                 targetList.add(hymn);
+                if (!exactKey.isEmpty()) customIdxMap.put(exactKey, newIdx);
+                if (!cleanKey.isEmpty()) customIdxMap.put(cleanKey, newIdx);
             }
 
-            // Extract lyric snippet
             String lyrics = hymn.containsKey("Lyrics") && hymn.get("Lyrics") != null ? hymn.get("Lyrics").toString().trim() : "";
             String snippet = "";
             if (!lyrics.isEmpty()) {
@@ -811,14 +883,12 @@ public class HymnRepository {
         return preview;
     }
 
-    /**
-     * Deletes any temporary staged files if the user cancels the import preview or after commit.
-     */
     public void cleanupStaging(HymnPackagePreview preview) {
         if (preview == null || preview.stagingDir == null) return;
         deleteRecursive(preview.stagingDir);
         preview.stagingDir = null;
         preview.stagedScoreFiles.clear();
+        preview.stagedBibleDbFile = null;
     }
 
     private static void deleteRecursive(File target) {
@@ -834,16 +904,18 @@ public class HymnRepository {
         target.delete();
     }
 
-    /**
-     * Commits the reviewed hymn package from staging to persistent internal storage.
-     */
     public synchronized ImportResult commitImport(HymnPackagePreview preview) {
         if (preview == null || !preview.isValid) {
             return new ImportResult(false, preview != null ? preview.errorMessage : "Invalid import preview");
         }
 
         int savedScores = 0;
+        boolean bibleInstalled = false;
         try {
+            if (preview.hasBibleDatabase && preview.stagedBibleDbFile != null && preview.stagedBibleDbFile.exists()) {
+                bibleInstalled = AssetUtil.installImportedBibleDatabase(mContext, preview.stagedBibleDbFile);
+            }
+
             if (!preview.stagedScoreFiles.isEmpty()) {
                 File scoresDir = new File(mContext.getFilesDir(), SCORES_DIR);
                 scoresDir.mkdirs();
@@ -867,15 +939,23 @@ public class HymnRepository {
                 saveCustomHymns(entry.getKey(), entry.getValue());
             }
 
-            ImportResult result = new ImportResult(true, String.format(Locale.getDefault(),
-                    "Successfully imported %d hymn(s)%s (%d new, %d updated).",
-                    preview.totalHymns,
-                    savedScores > 0 ? (" and " + savedScores + " musical score(s)") : "",
-                    preview.newHymnsCount,
-                    preview.updatedHymnsCount));
+            StringBuilder msg = new StringBuilder();
+            msg.append(String.format(Locale.getDefault(),
+                    "Successfully imported %d hymn(s) (%d new, %d updated)",
+                    preview.totalHymns, preview.newHymnsCount, preview.updatedHymnsCount));
+            if (savedScores > 0) {
+                msg.append(", ").append(savedScores).append(" musical score(s)");
+            }
+            if (bibleInstalled) {
+                msg.append(", and the full 5-translation Holy Bible database (Efik, KJV, RSV, BBE, NIV)");
+            }
+            msg.append(".");
+
+            ImportResult result = new ImportResult(true, msg.toString());
             result.importedCount = preview.newHymnsCount;
             result.updatedCount = preview.updatedHymnsCount;
             result.scoresCount = savedScores;
+            result.bibleUpdated = bibleInstalled;
             for (HymnPreviewItem item : preview.items) {
                 result.hymnTitles.add(item.title);
             }
@@ -910,9 +990,6 @@ public class HymnRepository {
         }
     }
 
-    /**
-     * Parses incoming hymn list from a JSON string.
-     */
     public List<HashMap<String, Object>> parseHymnsJson(String jsonStr) throws Exception {
         List<HashMap<String, Object>> list = new ArrayList<>();
         if (jsonStr == null || jsonStr.trim().isEmpty()) return list;
@@ -966,9 +1043,6 @@ public class HymnRepository {
         return map;
     }
 
-    /**
-     * Exports custom hymns (and any referenced imported PDF scores) to a shareable .acc bundle.
-     */
     public File exportHymnsPackage(String category) throws IOException {
         category = sanitizeCategory(category, CATEGORY_NEW);
         ArrayList<HashMap<String, Object>> customHymns = loadCustomHymns(category);
@@ -1013,9 +1087,6 @@ public class HymnRepository {
         return exportFile;
     }
 
-    /**
-     * Resets custom hymns for a category and removes any orphaned imported score PDFs.
-     */
     public synchronized void resetCategory(String category) {
         category = sanitizeCategory(category, CATEGORY_NEW);
         saveCustomHymns(category, new ArrayList<>());
@@ -1023,9 +1094,6 @@ public class HymnRepository {
         pruneOrphanedScores();
     }
 
-    /**
-     * Resets custom hymns across all categories and clears imported score PDFs.
-     */
     public synchronized void resetAllCategories() {
         for (String cat : VALID_CATEGORIES) {
             saveCustomHymns(cat, new ArrayList<>());
@@ -1038,6 +1106,7 @@ public class HymnRepository {
                 f.delete();
             }
         }
+        AssetUtil.resetImportedBibleDatabase(mContext);
     }
 
     private void pruneOrphanedScores() {

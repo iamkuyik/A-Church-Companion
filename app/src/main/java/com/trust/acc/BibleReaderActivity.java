@@ -237,10 +237,10 @@ public class BibleReaderActivity extends AppCompatActivity {
 	 */
 	private void loadParallelPanePreferences() {
 		if (sp.contains("bible_parallel_primary_id") && sp.contains("bible_parallel_secondary_id")) {
-			parallelPrimaryId = BibleVersion.getById(sp.getString("bible_parallel_primary_id", "efi")).id;
-			parallelSecondaryId = BibleVersion.getById(sp.getString("bible_parallel_secondary_id", "kjv")).id;
+			parallelPrimaryId = BibleVersion.getById(this, sp.getString("bible_parallel_primary_id", "efi")).id;
+			parallelSecondaryId = BibleVersion.getById(this, sp.getString("bible_parallel_secondary_id", "kjv")).id;
 		} else {
-			String legacyEng = BibleVersion.getById(sp.getString("bible_parallel_eng_id", "kjv")).id;
+			String legacyEng = BibleVersion.getById(this, sp.getString("bible_parallel_eng_id", "kjv")).id;
 			if ("efi".equalsIgnoreCase(legacyEng)) legacyEng = "kjv";
 			boolean legacyEfikFirst = sp.getBoolean("bible_parallel_efik_first", true);
 			parallelPrimaryId = legacyEfikFirst ? "efi" : legacyEng;
@@ -252,7 +252,7 @@ public class BibleReaderActivity extends AppCompatActivity {
 	}
 
 	private String pickAlternateVersion(String excludeId) {
-		for (BibleVersion v : BibleVersion.getSupportedVersions()) {
+		for (BibleVersion v : BibleVersion.getSupportedVersions(this)) {
 			if (!v.id.equalsIgnoreCase(excludeId)) return v.id;
 		}
 		return "kjv";
@@ -362,7 +362,7 @@ public class BibleReaderActivity extends AppCompatActivity {
 			dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
 		}
 
-		final List<BibleVersion> allVersions = BibleVersion.getSupportedVersions();
+		final List<BibleVersion> allVersions = BibleVersion.getSupportedVersions(this);
 		final Typeface serifFace = ResourcesCompat.getFont(this, R.font.crimson_pro);
 		final Typeface monoFace = ResourcesCompat.getFont(this, R.font.jetbrains_mono);
 
@@ -661,7 +661,7 @@ public class BibleReaderActivity extends AppCompatActivity {
 		Typeface serifFace = TypographyHelper.getReadingTypeface(this);
 		Typeface monoFace = ResourcesCompat.getFont(this, R.font.jetbrains_mono);
 
-		List<BibleVersion> versions = BibleVersion.getSupportedVersions();
+		List<BibleVersion> versions = BibleVersion.getSupportedVersions(this);
 		for (BibleVersion v : versions) {
 			TextView label = new TextView(this);
 			label.setText(v.name.toUpperCase(Locale.ROOT) + " (" + v.language.toUpperCase(Locale.ROOT) + ")");

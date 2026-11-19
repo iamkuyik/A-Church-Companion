@@ -375,9 +375,16 @@ public class NewHymnsActivity extends AppCompatActivity {
 			previewBinding.tvBadgeUpdated.setVisibility(View.GONE);
 		}
 
-		if (preview.scoresCount > 0) {
+		if (preview.scoresCount > 0 || preview.hasBibleDatabase) {
 			previewBinding.tvBadgeScores.setVisibility(View.VISIBLE);
-			previewBinding.tvBadgeScores.setText(preview.scoresCount + " Score" + (preview.scoresCount == 1 ? "" : "s"));
+			String label = "";
+			if (preview.scoresCount > 0) {
+				label = preview.scoresCount + " Score" + (preview.scoresCount == 1 ? "" : "s");
+			}
+			if (preview.hasBibleDatabase) {
+				label = label.isEmpty() ? "5 Bibles" : (label + " • 5 Bibles");
+			}
+			previewBinding.tvBadgeScores.setText(label);
 		} else {
 			previewBinding.tvBadgeScores.setVisibility(View.GONE);
 		}
