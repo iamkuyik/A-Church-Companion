@@ -5,7 +5,7 @@ plugins {
 def keystorePropertiesFile = rootProject.file("keystore.properties")
 def keystoreProperties = new Properties()
 if (keystorePropertiesFile.exists()) {
-	keystorePropertiesFile.load(new FileInputStream(keystorePropertiesFile))
+	keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 }
 
 android {
@@ -16,7 +16,7 @@ android {
 		namespace "com.trust.acc"
 		minSdk 26
 		targetSdk 34
-		versionCode 6
+		versionCode 7
 		versionName "1.4.0"
 		vectorDrawables.useSupportLibrary = true
 		buildConfigField "boolean", "ENABLE_SHEET_MUSIC", "true"
@@ -35,6 +35,8 @@ android {
 				storePassword keystoreProperties['storePassword']
 				keyAlias keystoreProperties['keyAlias']
 				keyPassword keystoreProperties['keyPassword']
+				v1SigningEnabled true
+				v2SigningEnabled true
 			}
 		}
 	}
@@ -46,6 +48,8 @@ android {
 			proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
 			if (keystorePropertiesFile.exists()) {
 				signingConfig signingConfigs.release
+			} else {
+				signingConfig signingConfigs.debug
 			}
 		}
 	}
