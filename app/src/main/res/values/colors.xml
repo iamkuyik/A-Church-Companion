@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<!-- Sacred Editorial Design System: Hymnal Parchment Theme -->
+	<color name="colorPrimary">#1A1715</color>
+	<color name="colorPrimaryDark">#0D1524</color>
+	<color name="colorAccent">#9A722C</color>
+	<color name="colorOnAccent">#FFFFFF</color>
+	<color name="colorAntiqueGold">#9A722C</color>
+	<color name="colorGoldBright">#C69A32</color>
+
+	<!-- Surfaces: Sacred Hymnal Parchment -->
+	<color name="colorBackground">#FAF6EE</color>
+	<color name="colorSurface">#FFFDF9</color>
+	<color name="colorSurfaceElevated">#FFFCF6</color>
+	<color name="colorSurfaceRecessed">#F4EFE4</color>
+	<color name="colorCardBorder">#EAE2D3</color>
+	<color name="colorDivider">#EAE2D3</color>
+
+	<!-- Liturgical Spine Accents -->
+	<color name="colorSpineBurgundy">#7A232E</color>
+	<color name="colorSpineEmerald">#1E5641</color>
+	<color name="colorSpineNavy">#233B6E</color>
+
+	<!-- Editorial Typography -->
+	<color name="colorTextPrimary">#1A1715</color>
+	<color name="colorTextSecondary">#57524B</color>
+	<color name="colorTextTertiary">#787167</color>
+	<color name="colorEnglishScripture">#3F3B36</color>
+
+	<!-- Restrained Badges & Inputs -->
+	<color name="colorSearchBg">#F4EFE4</color>
+	<color name="colorBadgeBg">#EFE8DA</color>
+	<color name="colorBadgeText">#9A722C</color>
+	<color name="colorSubtleGoldStroke">#559A722C</color>
+	<color name="colorControlHighlight">#EAE2D3</color>
+	<color name="colorControlNormal">#787167</color>
+</resources>

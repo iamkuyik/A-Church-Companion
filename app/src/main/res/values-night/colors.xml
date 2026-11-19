@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<!-- Sacred Editorial Design System: Midnight Sanctuary Theme -->
+	<color name="colorPrimary">#F4F0EA</color>
+	<color name="colorPrimaryDark">#070A10</color>
+	<color name="colorAccent">#D4AF37</color>
+	<color name="colorOnAccent">#0A0E17</color>
+	<color name="colorAntiqueGold">#D4AF37</color>
+	<color name="colorGoldBright">#F3E5AB</color>
+
+	<!-- Surfaces: Midnight Sanctuary (Deep Obsidian Dominant, Subtle Slate-Blue Secondary) -->
+	<color name="colorBackground">#0A0E17</color>
+	<color name="colorSurface">#111726</color>
+	<color name="colorSurfaceElevated">#141C2E</color>
+	<color name="colorSurfaceRecessed">#0E1422</color>
+	<color name="colorCardBorder">#1E293B</color>
+	<color name="colorDivider">#1E293B</color>
+
+	<!-- Liturgical Spine Accents -->
+	<color name="colorSpineBurgundy">#B84A58</color>
+	<color name="colorSpineEmerald">#3B9B78</color>
+	<color name="colorSpineNavy">#5B82D6</color>
+
+	<!-- Editorial Typography -->
+	<color name="colorTextPrimary">#F4F0EA</color>
+	<color name="colorTextSecondary">#94A3B8</color>
+	<color name="colorTextTertiary">#64748B</color>
+	<color name="colorEnglishScripture">#B0BECF</color>
+
+	<!-- Restrained Badges & Inputs -->
+	<color name="colorSearchBg">#121928</color>
+	<color name="colorBadgeBg">#182236</color>
+	<color name="colorBadgeText">#D4AF37</color>
+	<color name="colorSubtleGoldStroke">#4DD4AF37</color>
+	<color name="colorControlHighlight">#182236</color>
+	<color name="colorControlNormal">#94A3B8</color>
+</resources>

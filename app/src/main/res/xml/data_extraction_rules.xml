@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="database" path="bible_bilingual.db" />
+        <exclude domain="database" path="bible_bilingual.db-journal" />
+        <exclude domain="database" path="bible_bilingual.db-wal" />
+        <exclude domain="database" path="bible_bilingual.db-shm" />
+        <exclude domain="file" path="scores_imported/" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="database" path="bible_bilingual.db" />
+        <exclude domain="database" path="bible_bilingual.db-journal" />
+        <exclude domain="database" path="bible_bilingual.db-wal" />
+        <exclude domain="database" path="bible_bilingual.db-shm" />
+    </device-transfer>
+</data-extraction-rules>

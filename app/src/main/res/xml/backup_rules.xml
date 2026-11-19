@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+    <!-- Exclude the read-only 20 MB Bible database (re-extracted from assets on install) -->
+    <exclude domain="database" path="bible_bilingual.db" />
+    <exclude domain="database" path="bible_bilingual.db-journal" />
+    <exclude domain="database" path="bible_bilingual.db-wal" />
+    <exclude domain="database" path="bible_bilingual.db-shm" />
+    <!-- Exclude large imported score PDFs from cloud backup quota -->
+    <exclude domain="file" path="scores_imported/" />
+</full-backup-content>

@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	xmlns:tools="http://schemas.android.com/tools"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent"
+	android:background="@color/colorBackground"
+	android:orientation="vertical">
+
+	<!-- Editorial Top Bar -->
+	<LinearLayout
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:orientation="horizontal"
+		android:gravity="center_vertical"
+		android:paddingStart="10dp"
+		android:paddingEnd="16dp"
+		android:paddingTop="14dp"
+		android:paddingBottom="10dp">
+
+		<ImageButton
+			android:id="@+id/btn_back"
+			android:layout_width="48dp"
+			android:layout_height="48dp"
+			android:background="?android:attr/selectableItemBackgroundBorderless"
+			android:src="@drawable/ic_arrow_back"
+			android:contentDescription="Back"
+			app:tint="@color/colorTextPrimary" />
+
+		<LinearLayout
+			android:layout_width="0dp"
+			android:layout_height="wrap_content"
+			android:layout_weight="1"
+			android:layout_marginStart="6dp"
+			android:orientation="vertical">
+
+			<TextView
+				android:id="@+id/header_title"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:fontFamily="@font/crimson_pro"
+				android:text="Scripture Passage"
+				android:textColor="@color/colorTextPrimary"
+				android:textSize="18sp"
+				android:textStyle="bold" />
+
+			<LinearLayout
+				android:id="@+id/btn_version_selector"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:layout_marginTop="3dp"
+				android:gravity="center_vertical"
+				android:orientation="horizontal"
+				android:paddingVertical="2dp"
+				android:paddingHorizontal="8dp"
+				android:background="@drawable/bg_version_pill"
+				android:clickable="true"
+				android:focusable="true"
+				android:foreground="?android:attr/selectableItemBackground">
+
+				<TextView
+					android:id="@+id/header_subtitle"
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:fontFamily="@font/crimson_pro"
+					android:text="Ŋwed Abasi (EFI)"
+					android:textColor="@color/colorAntiqueGold"
+					android:textSize="11.5sp"
+					android:textStyle="bold" />
+
+				<ImageView
+					android:layout_width="14dp"
+					android:layout_height="14dp"
+					android:layout_marginStart="4dp"
+					android:src="@drawable/ic_chevron_down"
+					android:contentDescription="@null"
+					app:tint="@color/colorAntiqueGold" />
+			</LinearLayout>
+		</LinearLayout>
+
+		<!-- 3. Aa Typography Popover Button in Header -->
+		<TextView
+			android:id="@+id/btn_aa"
+			android:layout_width="44dp"
+			android:layout_height="44dp"
+			android:gravity="center"
+			android:background="@drawable/bg_search_bar"
+			android:fontFamily="@font/crimson_pro"
+			android:contentDescription="Typography and theme settings"
+			android:text="Aa"
+			android:textColor="@color/colorTextPrimary"
+			android:textSize="15sp"
+			android:textStyle="bold"
+			android:clickable="true"
+			android:focusable="true"
+			android:foreground="?android:attr/selectableItemBackground"
+			android:layout_marginEnd="6dp" />
+
+		<ImageButton
+			android:id="@+id/btn_bookmark"
+			android:layout_width="48dp"
+			android:layout_height="48dp"
+			android:background="?android:attr/selectableItemBackgroundBorderless"
+			android:src="@drawable/ic_bookmark_border"
+			android:contentDescription="Save (hold to view all bookmarks)"
+			app:tint="@color/colorTextPrimary" />
+
+		<!-- Reader ☰ Menu: Bookmarks, Translations & View Mode, Typography -->
+		<ImageButton
+			android:id="@+id/btn_reader_menu"
+			android:layout_width="48dp"
+			android:layout_height="48dp"
+			android:background="?android:attr/selectableItemBackgroundBorderless"
+			android:src="@drawable/ic_menu"
+			android:contentDescription="Reader menu"
+			app:tint="@color/colorTextPrimary" />
+	</LinearLayout>
+
+	<!-- Hairline Divider -->
+	<View
+		android:layout_width="match_parent"
+		android:layout_height="1dp"
+		android:background="@color/colorCardBorder" />
+
+	<!-- Loading Spinner -->
+	<ProgressBar
+		android:id="@+id/progressbar1"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_gravity="center"
+		android:layout_marginTop="56dp"
+		android:indeterminate="true"
+		android:indeterminateTint="@color/colorAntiqueGold"
+		style="?android:progressBarStyle" />
+
+	<!-- Verse List -->
+	<ListView
+		android:id="@+id/listview1"
+		android:layout_width="match_parent"
+		android:layout_height="match_parent"
+		android:clipToPadding="false"
+		android:divider="@null"
+		android:dividerHeight="0dp"
+		android:paddingBottom="36dp"
+		android:scrollbars="vertical"
+		android:fastScrollEnabled="true"
+		android:choiceMode="none"
+		tools:listitem="@layout/verse_row" />
+</LinearLayout>

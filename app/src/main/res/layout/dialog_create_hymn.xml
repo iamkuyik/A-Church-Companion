@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Add New Hymn modal — Sacred Editorial (v1.3.0) styling, mirrors dialog_bible_version_picker -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_dialog_rounded"
+    android:orientation="vertical"
+    android:paddingHorizontal="20dp"
+    android:paddingTop="22dp"
+    android:paddingBottom="18dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/jetbrains_mono"
+        android:letterSpacing="0.12"
+        android:text="NEW HYMN"
+        android:textColor="@color/colorAntiqueGold"
+        android:textSize="10.5sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:fontFamily="@font/crimson_pro"
+        android:text="Add / Create Hymn"
+        android:textColor="@color/colorTextPrimary"
+        android:textSize="20sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:fontFamily="@font/crimson_pro"
+        android:text="Enter the title and lyrics for the new hymn."
+        android:textColor="@color/colorTextSecondary"
+        android:textSize="13sp"
+        android:textStyle="italic" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_marginTop="14dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/jetbrains_mono"
+                android:letterSpacing="0.1"
+                android:text="COLLECTION"
+                android:textColor="@color/colorTextTertiary"
+                android:textSize="10.5sp"
+                android:textStyle="bold" />
+
+            <Spinner
+                android:id="@+id/spinner_category"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:layout_marginTop="6dp"
+                android:layout_marginBottom="12dp"
+                android:background="@drawable/bg_search_bar"
+                android:paddingHorizontal="10dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/jetbrains_mono"
+                android:letterSpacing="0.1"
+                android:text="HYMN TITLE / NUMBER"
+                android:textColor="@color/colorTextTertiary"
+                android:textSize="10.5sp"
+                android:textStyle="bold" />
+
+            <EditText
+                android:id="@+id/et_dialog_title"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:layout_marginTop="6dp"
+                android:layout_marginBottom="12dp"
+                android:background="@drawable/bg_search_bar"
+                android:fontFamily="@font/crimson_pro"
+                android:hint="e.g. 14. Abasi Ayaya"
+                android:importantForAutofill="no"
+                android:inputType="textCapWords"
+                android:maxLength="120"
+                android:paddingHorizontal="12dp"
+                android:textColor="@color/colorTextPrimary"
+                android:textColorHint="@color/colorTextTertiary"
+                android:textSize="15sp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/jetbrains_mono"
+                android:letterSpacing="0.1"
+                android:text="LYRICS (VERSES &amp; CHORUS)"
+                android:textColor="@color/colorTextTertiary"
+                android:textSize="10.5sp"
+                android:textStyle="bold" />
+
+            <EditText
+                android:id="@+id/et_dialog_lyrics"
+                android:layout_width="match_parent"
+                android:layout_height="180dp"
+                android:layout_marginTop="6dp"
+                android:background="@drawable/bg_search_bar"
+                android:fontFamily="@font/crimson_pro"
+                android:gravity="top|start"
+                android:hint="1.\nType or paste verses here...\n\n[CHORUS]\n..."
+                android:importantForAutofill="no"
+                android:inputType="textMultiLine|textCapSentences"
+                android:padding="12dp"
+                android:textColor="@color/colorTextPrimary"
+                android:textColorHint="@color/colorTextTertiary"
+                android:textSize="15sp" />
+        </LinearLayout>
+    </ScrollView>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:gravity="end"
+        android:orientation="horizontal">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_create_cancel"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/jetbrains_mono"
+            android:letterSpacing="0.08"
+            android:text="CANCEL"
+            android:textColor="@color/colorTextSecondary"
+            android:textSize="12sp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_create_save"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/jetbrains_mono"
+            android:letterSpacing="0.08"
+            android:text="SAVE HYMN"
+            android:textColor="@color/colorAntiqueGold"
+            android:textSize="12sp" />
+    </LinearLayout>
+</LinearLayout>

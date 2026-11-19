@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	xmlns:tools="http://schemas.android.com/tools"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent"
+	android:background="@color/colorBackground"
+	android:orientation="vertical">
+
+	<!-- Editorial Top Bar -->
+	<LinearLayout
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:orientation="horizontal"
+		android:gravity="center_vertical"
+		android:paddingStart="10dp"
+		android:paddingEnd="20dp"
+		android:paddingTop="14dp"
+		android:paddingBottom="10dp">
+
+		<ImageButton
+			android:id="@+id/btn_back"
+			android:layout_width="48dp"
+			android:layout_height="48dp"
+			android:background="?android:attr/selectableItemBackgroundBorderless"
+			android:src="@drawable/ic_arrow_back"
+			android:contentDescription="Back"
+			app:tint="@color/colorTextPrimary" />
+
+		<LinearLayout
+			android:layout_width="0dp"
+			android:layout_height="wrap_content"
+			android:layout_weight="1"
+			android:layout_marginStart="6dp"
+			android:orientation="vertical">
+
+			<TextView
+				android:id="@+id/header_title"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:fontFamily="@font/crimson_pro"
+				android:text="The Holy Bible"
+				android:textColor="@color/colorTextPrimary"
+				android:textSize="18sp"
+				android:textStyle="bold" />
+
+			<TextView
+				android:id="@+id/header_subtitle"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:layout_marginTop="1dp"
+				android:fontFamily="sans-serif"
+				android:text="Mme Ŋwed Abasi • Bilingual Parallel Text"
+				android:textColor="@color/colorTextSecondary"
+				android:textSize="12sp" />
+		</LinearLayout>
+	</LinearLayout>
+
+	<!-- Hairline Divider -->
+	<View
+		android:layout_width="match_parent"
+		android:layout_height="1dp"
+		android:background="@color/colorCardBorder" />
+
+	<!-- Search Bar Container -->
+	<LinearLayout
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:paddingHorizontal="20dp"
+		android:paddingTop="12dp"
+		android:paddingBottom="8dp">
+
+		<LinearLayout
+			android:layout_width="match_parent"
+			android:layout_height="44dp"
+			android:background="@drawable/bg_search_bar"
+			android:gravity="center_vertical"
+			android:orientation="horizontal"
+			android:paddingHorizontal="14dp">
+
+			<ImageView
+				android:layout_width="18dp"
+				android:layout_height="18dp"
+				android:src="@drawable/ic_search"
+				app:tint="@color/colorTextTertiary"
+				android:layout_marginEnd="10dp" 
+			android:importantForAccessibility="no" />
+
+			<EditText
+				android:id="@+id/et_search"
+				android:layout_width="match_parent"
+				android:layout_height="match_parent"
+				android:background="@null"
+				android:fontFamily="sans-serif"
+				android:hint="Search books of the Bible…"
+				android:textColor="@color/colorTextPrimary"
+				android:textColorHint="@color/colorTextTertiary"
+				android:textSize="14sp"
+				android:singleLine="true"
+				android:imeOptions="actionSearch" />
+		</LinearLayout>
+	</LinearLayout>
+
+	<!-- 7. Sticky Testament Pill Tabs -->
+	<LinearLayout
+		android:id="@+id/testament_pill_tabs"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:paddingHorizontal="20dp"
+		android:paddingBottom="10dp"
+		android:orientation="horizontal">
+
+		<LinearLayout
+			android:layout_width="match_parent"
+			android:layout_height="38dp"
+			android:background="@drawable/bg_search_bar"
+			android:padding="3dp"
+			android:orientation="horizontal">
+
+			<TextView
+				android:id="@+id/tab_ot"
+				android:layout_width="0dp"
+				android:layout_height="match_parent"
+				android:layout_weight="1"
+				android:gravity="center"
+				android:clickable="true"
+				android:focusable="true"
+				android:text="OLD TESTAMENT"
+				android:textSize="11sp"
+				android:textStyle="bold"
+				android:letterSpacing="0.08"
+				android:fontFamily="@font/jetbrains_mono"
+				android:background="@drawable/bg_circle_accent"
+				android:textColor="@color/colorAntiqueGold" />
+
+			<TextView
+				android:id="@+id/tab_nt"
+				android:layout_width="0dp"
+				android:layout_height="match_parent"
+				android:layout_weight="1"
+				android:gravity="center"
+				android:clickable="true"
+				android:focusable="true"
+				android:text="NEW TESTAMENT"
+				android:textSize="11sp"
+				android:textStyle="bold"
+				android:letterSpacing="0.08"
+				android:fontFamily="@font/jetbrains_mono"
+				android:background="@null"
+				android:textColor="@color/colorTextSecondary" />
+		</LinearLayout>
+	</LinearLayout>
+
+	<!-- Hairline Divider -->
+	<View
+		android:layout_width="match_parent"
+		android:layout_height="1dp"
+		android:background="@color/colorCardBorder" />
+
+	<!-- Books List -->
+	<ListView
+		android:id="@+id/listview1"
+		android:layout_width="match_parent"
+		android:layout_height="match_parent"
+		android:clipToPadding="false"
+		android:divider="@null"
+		android:dividerHeight="0dp"
+		android:paddingBottom="24dp"
+		android:scrollbars="vertical"
+		android:choiceMode="none"
+		tools:listitem="@layout/efik_hymn_row" />
+</LinearLayout>

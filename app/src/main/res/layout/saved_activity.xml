@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	xmlns:tools="http://schemas.android.com/tools"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent"
+	android:background="@color/colorBackground"
+	android:orientation="vertical">
+
+	<!-- Editorial Top Bar -->
+	<LinearLayout
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:orientation="horizontal"
+		android:gravity="center_vertical"
+		android:paddingStart="10dp"
+		android:paddingEnd="20dp"
+		android:paddingTop="14dp"
+		android:paddingBottom="10dp">
+
+		<ImageButton
+			android:id="@+id/btn_back"
+			android:layout_width="48dp"
+			android:layout_height="48dp"
+			android:background="?android:attr/selectableItemBackgroundBorderless"
+			android:src="@drawable/ic_arrow_back"
+			android:contentDescription="Back"
+			app:tint="@color/colorTextPrimary" />
+
+		<LinearLayout
+			android:layout_width="0dp"
+			android:layout_height="wrap_content"
+			android:layout_weight="1"
+			android:layout_marginStart="6dp"
+			android:orientation="vertical">
+
+			<TextView
+				android:id="@+id/header_title"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:fontFamily="@font/crimson_pro"
+				android:text="Saved"
+				android:textColor="@color/colorTextPrimary"
+				android:textSize="18sp"
+				android:textStyle="bold" />
+
+			<TextView
+				android:id="@+id/header_subtitle"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:layout_marginTop="1dp"
+				android:fontFamily="sans-serif"
+				android:text="Hymns &amp; Scripture Passages"
+				android:textColor="@color/colorTextSecondary"
+				android:textSize="12sp" />
+		</LinearLayout>
+	</LinearLayout>
+
+	<!-- Hairline Divider -->
+	<View
+		android:layout_width="match_parent"
+		android:layout_height="1dp"
+		android:background="@color/colorCardBorder" />
+
+	<!-- Empty State Container -->
+	<LinearLayout
+		android:id="@+id/layout_empty"
+		android:layout_width="match_parent"
+		android:layout_height="0dp"
+		android:layout_weight="1"
+		android:gravity="center"
+		android:orientation="vertical"
+		android:padding="32dp"
+		android:visibility="gone">
+
+		<ImageView
+			android:layout_width="48dp"
+			android:layout_height="48dp"
+			android:src="@drawable/ic_bookmark_border"
+			app:tint="@color/colorTextTertiary"
+			android:layout_marginBottom="16dp" 
+			android:importantForAccessibility="no" />
+
+		<TextView
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:fontFamily="@font/crimson_pro"
+			android:text="No Saved Items"
+			android:textColor="@color/colorTextPrimary"
+			android:textSize="18sp"
+			android:textStyle="bold" />
+
+		<TextView
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_marginTop="6dp"
+			android:fontFamily="sans-serif"
+			android:gravity="center"
+			android:text="Tap the bookmark icon in any hymn or Scripture chapter to save it here for quick access."
+			android:textColor="@color/colorTextSecondary"
+			android:textSize="13sp"
+			android:lineSpacingMultiplier="1.2" />
+	</LinearLayout>
+
+	<!-- Saved List -->
+	<ListView
+		android:id="@+id/listview1"
+		android:layout_width="match_parent"
+		android:layout_height="0dp"
+		android:layout_weight="1"
+		android:clipToPadding="false"
+		android:divider="@null"
+		android:dividerHeight="0dp"
+		android:paddingBottom="24dp"
+		android:scrollbars="vertical"
+		android:choiceMode="none"
+		tools:listitem="@layout/efik_hymn_row" />
+</LinearLayout>

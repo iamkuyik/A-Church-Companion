@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	android:layout_width="match_parent"
+	android:layout_height="wrap_content"
+	android:background="@drawable/bg_dialog_rounded"
+	android:orientation="vertical"
+	android:paddingHorizontal="20dp"
+	android:paddingTop="22dp"
+	android:paddingBottom="18dp">
+
+	<!-- Editorial Dialog Header -->
+	<TextView
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:fontFamily="@font/jetbrains_mono"
+		android:letterSpacing="0.12"
+		android:text="SCRIPTURE READING LAYOUT"
+		android:textColor="@color/colorAntiqueGold"
+		android:textSize="10.5sp"
+		android:textStyle="bold" />
+
+	<TextView
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_marginTop="4dp"
+		android:fontFamily="@font/crimson_pro"
+		android:text="Translation &amp; Parallel Mode"
+		android:textColor="@color/colorTextPrimary"
+		android:textSize="20sp"
+		android:textStyle="bold" />
+
+	<!-- 1. 2-Way Segmented Pill Toggle for View Mode (Single View / Parallel View) -->
+	<LinearLayout
+		android:layout_width="match_parent"
+		android:layout_height="40dp"
+		android:layout_marginTop="16dp"
+		android:background="@drawable/bg_search_bar"
+		android:orientation="horizontal"
+		android:padding="3dp">
+
+		<TextView
+			android:id="@+id/tab_mode_single"
+			android:layout_width="0dp"
+			android:layout_height="match_parent"
+			android:layout_weight="1"
+			android:clickable="true"
+			android:focusable="true"
+			android:fontFamily="@font/jetbrains_mono"
+			android:gravity="center"
+			android:letterSpacing="0.06"
+			android:text="SINGLE VIEW"
+			android:textColor="@color/colorAntiqueGold"
+			android:textSize="11sp"
+			android:textStyle="bold" />
+
+		<TextView
+			android:id="@+id/tab_mode_parallel"
+			android:layout_width="0dp"
+			android:layout_height="match_parent"
+			android:layout_weight="1"
+			android:clickable="true"
+			android:focusable="true"
+			android:fontFamily="@font/jetbrains_mono"
+			android:gravity="center"
+			android:letterSpacing="0.06"
+			android:text="PARALLEL VIEW"
+			android:textColor="@color/colorTextSecondary"
+			android:textSize="11sp"
+			android:textStyle="bold" />
+	</LinearLayout>
+
+	<!-- Live Arrangement Summary Banner -->
+	<LinearLayout
+		android:id="@+id/banner_layout_summary"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:layout_marginTop="10dp"
+		android:background="@drawable/bg_card_selected_subtle"
+		android:orientation="vertical"
+		android:paddingHorizontal="14dp"
+		android:paddingVertical="10dp">
+
+		<TextView
+			android:id="@+id/tv_layout_summary_title"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:fontFamily="@font/crimson_pro"
+			android:text="Single Translation View"
+			android:textColor="@color/colorTextPrimary"
+			android:textSize="14sp"
+			android:textStyle="bold" />
+
+		<TextView
+			android:id="@+id/tv_layout_summary_desc"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginTop="2dp"
+			android:fontFamily="@font/crimson_pro"
+			android:text="Choose any Efik or English translation below."
+			android:textColor="@color/colorTextSecondary"
+			android:textSize="12.5sp"
+			android:textStyle="italic" />
+	</LinearLayout>
+
+	<!-- Section Label -->
+	<TextView
+		android:id="@+id/tv_version_section_label"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_marginTop="16dp"
+		android:layout_marginBottom="8dp"
+		android:fontFamily="@font/jetbrains_mono"
+		android:letterSpacing="0.1"
+		android:text="SELECT TRANSLATION"
+		android:textColor="@color/colorTextTertiary"
+		android:textSize="10.5sp"
+		android:textStyle="bold" />
+
+	<!-- Container for Dynamic Version Cards (Pane 1 / Single + Pane 2 / Companion) -->
+	<ScrollView
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:layout_weight="1">
+
+		<LinearLayout
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:orientation="vertical">
+
+			<LinearLayout
+				android:id="@+id/container_versions"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:orientation="vertical" />
+
+			<!-- Pane 2 Section Label (Parallel View only) -->
+			<TextView
+				android:id="@+id/tv_secondary_section_label"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:layout_marginTop="12dp"
+				android:layout_marginBottom="8dp"
+				android:fontFamily="@font/jetbrains_mono"
+				android:letterSpacing="0.1"
+				android:text="PANE 2 • COMPANION TRANSLATION"
+				android:textColor="@color/colorTextTertiary"
+				android:textSize="10.5sp"
+				android:textStyle="bold"
+				android:visibility="gone" />
+
+			<LinearLayout
+				android:id="@+id/container_versions_secondary"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:orientation="vertical"
+				android:visibility="gone" />
+		</LinearLayout>
+	</ScrollView>
+
+	<!-- Bottom Close Button -->
+	<LinearLayout
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:layout_marginTop="12dp"
+		android:gravity="end"
+		android:orientation="horizontal">
+
+		<com.google.android.material.button.MaterialButton
+			android:id="@+id/btn_picker_done"
+			style="@style/Widget.MaterialComponents.Button.TextButton"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:fontFamily="@font/jetbrains_mono"
+			android:letterSpacing="0.08"
+			android:text="DONE"
+			android:textColor="@color/colorAntiqueGold"
+			android:textSize="12sp" />
+	</LinearLayout>
+</LinearLayout>

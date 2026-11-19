@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	xmlns:tools="http://schemas.android.com/tools"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent"
+	android:background="@color/colorBackground"
+	android:orientation="vertical">
+
+	<!-- Editorial Top Bar -->
+	<LinearLayout
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:orientation="horizontal"
+		android:gravity="center_vertical"
+		android:paddingStart="10dp"
+		android:paddingEnd="16dp"
+		android:paddingTop="14dp"
+		android:paddingBottom="10dp">
+
+		<ImageButton
+			android:id="@+id/btn_back"
+			android:layout_width="48dp"
+			android:layout_height="48dp"
+			android:background="?android:attr/selectableItemBackgroundBorderless"
+			android:src="@drawable/ic_arrow_back"
+			android:contentDescription="Back"
+			app:tint="@color/colorTextPrimary" />
+
+		<LinearLayout
+			android:layout_width="0dp"
+			android:layout_height="wrap_content"
+			android:layout_weight="1"
+			android:layout_marginStart="6dp"
+			android:orientation="vertical">
+
+			<TextView
+				android:id="@+id/txt_title"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:fontFamily="@font/crimson_pro"
+				android:text="Hymn Title"
+				android:textColor="@color/colorTextPrimary"
+				android:textSize="18sp"
+				android:textStyle="bold"
+				android:singleLine="true"
+				android:ellipsize="end" />
+
+			<TextView
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:layout_marginTop="1dp"
+				android:fontFamily="sans-serif"
+				android:text="New Hymns &amp; Musical Scores"
+				android:textColor="@color/colorTextSecondary"
+				android:textSize="12sp" />
+		</LinearLayout>
+
+		<!-- Aa Typography Popover Button in Header -->
+		<TextView
+			android:id="@+id/btn_aa"
+			android:layout_width="44dp"
+			android:layout_height="44dp"
+			android:gravity="center"
+			android:background="@drawable/bg_search_bar"
+			android:fontFamily="@font/crimson_pro"
+			android:contentDescription="Typography and theme settings"
+			android:text="Aa"
+			android:textColor="@color/colorTextPrimary"
+			android:textSize="15sp"
+			android:textStyle="bold"
+			android:clickable="true"
+			android:focusable="true"
+			android:foreground="?android:attr/selectableItemBackground"
+			android:layout_marginEnd="6dp" />
+
+		<ImageButton
+			android:id="@+id/btn_bookmark"
+			android:layout_width="48dp"
+			android:layout_height="48dp"
+			android:background="?android:attr/selectableItemBackgroundBorderless"
+			android:src="@drawable/ic_bookmark_border"
+			android:contentDescription="Save"
+			app:tint="@color/colorTextPrimary" />
+	</LinearLayout>
+
+	<!-- Sheet Music Toggle Bar -->
+	<LinearLayout
+		android:id="@+id/bar_toggle_score"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:paddingHorizontal="20dp"
+		android:paddingBottom="10dp">
+
+		<com.google.android.material.button.MaterialButton
+			android:id="@+id/btn_toggle"
+			style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+			android:layout_width="match_parent"
+			android:layout_height="42dp"
+			android:text="VIEW MUSICAL SCORE"
+			android:textSize="11sp"
+			android:letterSpacing="0.08"
+			android:textColor="@color/colorAntiqueGold"
+			android:fontFamily="@font/jetbrains_mono"
+			app:cornerRadius="4dp"
+			app:strokeColor="@color/colorCardBorder" />
+	</LinearLayout>
+
+	<!-- Hairline Divider -->
+	<View
+		android:layout_width="match_parent"
+		android:layout_height="1dp"
+		android:background="@color/colorCardBorder" />
+
+	<!-- PDF Container with Pinch-to-Zoom & Double-Tap Zoom -->
+	<LinearLayout
+		android:id="@+id/pdf_container"
+		android:layout_width="match_parent"
+		android:layout_height="0dp"
+		android:layout_weight="1"
+		android:orientation="vertical"
+		android:visibility="gone">
+
+		<com.trust.acc.ZoomableRecyclerView
+			android:id="@+id/recycler_pdf_pages"
+			android:layout_width="match_parent"
+			android:layout_height="match_parent"
+			android:clipToPadding="false"
+			android:paddingHorizontal="8dp"
+			android:paddingVertical="8dp"
+			android:scrollbars="vertical" />
+	</LinearLayout>
+
+	<!-- Lyrics Scroll Container -->
+	<ScrollView
+		android:id="@+id/scroll_lyrics"
+		android:layout_width="match_parent"
+		android:layout_height="0dp"
+		android:layout_weight="1"
+		android:fillViewport="true"
+		android:scrollbars="vertical">
+
+		<LinearLayout
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:orientation="vertical"
+			android:gravity="center_horizontal"
+			android:paddingHorizontal="24dp"
+			android:paddingTop="26dp"
+			android:paddingBottom="48dp">
+
+			<TextView
+				android:id="@+id/tv_body_title"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:gravity="center"
+				android:fontFamily="@font/crimson_pro"
+				android:text="Hymn Title"
+				android:textColor="@color/colorTextPrimary"
+				android:textSize="21sp"
+				android:textStyle="bold"
+				android:lineSpacingMultiplier="1.2" />
+
+			<!-- Subtle Antique-Gold Rule -->
+			<View
+				android:layout_width="40dp"
+				android:layout_height="1dp"
+				android:layout_marginTop="14dp"
+				android:layout_marginBottom="24dp"
+				android:background="@color/colorAntiqueGold" />
+
+			<TextView
+				android:id="@+id/txt_lyrics"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:gravity="center_horizontal"
+				android:fontFamily="@font/crimson_pro"
+				android:text="Lyrics will appear here..."
+				android:textColor="@color/colorTextPrimary"
+				android:textSize="17sp"
+				android:lineSpacingMultiplier="1.52" />
+		</LinearLayout>
+	</ScrollView>
+</LinearLayout>

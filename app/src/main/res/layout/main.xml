@@ -1,0 +1,498 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	xmlns:tools="http://schemas.android.com/tools"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent"
+	android:background="@color/colorBackground"
+	android:orientation="vertical">
+
+	<!-- Editorial Top Bar -->
+	<LinearLayout
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:orientation="horizontal"
+		android:gravity="center_vertical"
+		android:paddingStart="22dp"
+		android:paddingEnd="16dp"
+		android:paddingTop="18dp"
+		android:paddingBottom="14dp">
+
+		<LinearLayout
+			android:layout_width="0dp"
+			android:layout_height="wrap_content"
+			android:layout_weight="1"
+			android:orientation="vertical">
+
+			<TextView
+				android:id="@+id/textview1"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:fontFamily="@font/crimson_pro"
+				android:text="CHURCH OF CHRIST"
+				android:textColor="@color/colorTextPrimary"
+				android:textSize="17.5sp"
+				android:textStyle="bold"
+				android:letterSpacing="0.06" />
+
+			<TextView
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:layout_marginTop="2dp"
+				android:fontFamily="@font/crimson_pro"
+				android:text="Hymnal &amp; Bilingual Holy Bible"
+				android:textColor="@color/colorTextSecondary"
+				android:textSize="12.5sp"
+				android:textStyle="italic" />
+		</LinearLayout>
+
+		<!-- Saved Button -->
+		<com.google.android.material.button.MaterialButton
+			android:id="@+id/btn_saved"
+			style="@style/Widget.MaterialComponents.Button.TextButton"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:minHeight="36dp"
+			android:paddingHorizontal="8dp"
+			android:text="SAVED"
+			android:textSize="11sp"
+			android:letterSpacing="0.08"
+			android:textColor="@color/colorTextSecondary"
+			android:fontFamily="sans-serif-medium" />
+
+		<!-- Restrained Theme Button -->
+		<com.google.android.material.button.MaterialButton
+			android:id="@+id/btn_theme"
+			style="@style/Widget.MaterialComponents.Button.TextButton"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:minHeight="36dp"
+			android:paddingHorizontal="12dp"
+			android:text="THEME"
+			android:textSize="11sp"
+			android:letterSpacing="0.08"
+			android:textColor="@color/colorAntiqueGold"
+			android:fontFamily="sans-serif-medium" />
+	</LinearLayout>
+
+	<!-- Fine Hairline Divider under header -->
+	<View
+		android:layout_width="match_parent"
+		android:layout_height="1dp"
+		android:background="@color/colorCardBorder" />
+
+	<!-- Main Content Scroll -->
+	<ScrollView
+		android:id="@+id/vscroll1"
+		android:layout_width="match_parent"
+		android:layout_height="match_parent"
+		android:fillViewport="true"
+		android:scrollbars="vertical"
+		android:fadeScrollbars="true">
+
+		<LinearLayout
+			android:id="@+id/linear_button_container"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:orientation="vertical"
+			android:paddingHorizontal="20dp"
+			android:paddingTop="18dp"
+			android:paddingBottom="36dp">
+
+			<!-- 7. Featured Scripture Epigraph (Ephesians 5:19 Quote Card) -->
+			<LinearLayout
+				android:id="@+id/ephesians_quote_card"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:orientation="vertical"
+				android:background="@drawable/bg_quote_card"
+				android:paddingHorizontal="18dp"
+				android:paddingVertical="18dp"
+				android:layout_marginBottom="22dp">
+
+				<TextView
+					android:id="@+id/ephesians_quote_text"
+					android:layout_width="match_parent"
+					android:layout_height="wrap_content"
+					android:gravity="center"
+					android:fontFamily="@font/crimson_pro"
+					android:text="&quot;Speaking to one another in psalms and hymns and spiritual songs, singing and making melody in your heart to the Lord.&quot;"
+					android:textColor="@color/colorTextPrimary"
+					android:textSize="14sp"
+					android:textStyle="italic"
+					android:lineSpacingMultiplier="1.42" />
+
+				<TextView
+					android:id="@+id/ephesians_quote_ref"
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:layout_gravity="center_horizontal"
+					android:layout_marginTop="10dp"
+					android:fontFamily="sans-serif"
+					android:text="— EPHESIANS 5:19 —"
+					android:textColor="@color/colorAntiqueGold"
+					android:textSize="11sp"
+					android:letterSpacing="0.14" />
+			</LinearLayout>
+
+			<!-- 1. FEATURED: The Bilingual Holy Bible (button4 in MainActivity) -->
+			<FrameLayout
+				android:id="@+id/button4"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:clickable="true"
+				android:focusable="true"
+				android:foreground="?android:attr/selectableItemBackground"
+				android:background="@drawable/bg_search_bar"
+				android:layout_marginBottom="22dp">
+
+				<LinearLayout
+					android:layout_width="match_parent"
+					android:layout_height="wrap_content"
+					android:orientation="horizontal">
+
+					<!-- Antique Gold Accent Bar on Left Edge -->
+					<View
+						android:layout_width="4dp"
+						android:layout_height="match_parent"
+						android:background="@color/colorAntiqueGold" />
+
+					<LinearLayout
+						android:layout_width="match_parent"
+						android:layout_height="wrap_content"
+						android:orientation="vertical"
+						android:paddingHorizontal="18dp"
+						android:paddingVertical="18dp">
+
+						<LinearLayout
+							android:layout_width="match_parent"
+							android:layout_height="wrap_content"
+							android:gravity="center_vertical"
+							android:orientation="horizontal">
+
+							<TextView
+								android:layout_width="0dp"
+								android:layout_height="wrap_content"
+								android:layout_weight="1"
+								android:fontFamily="sans-serif-medium"
+								android:text="I. SACRED SCRIPTURE"
+								android:textColor="@color/colorAntiqueGold"
+								android:textSize="11sp"
+								android:letterSpacing="0.1" />
+
+							<TextView
+								android:layout_width="wrap_content"
+								android:layout_height="wrap_content"
+								android:fontFamily="sans-serif"
+								android:text="PARALLEL TEXT"
+								android:textColor="@color/colorTextTertiary"
+								android:textSize="10sp"
+								android:letterSpacing="0.08" />
+						</LinearLayout>
+
+						<TextView
+							android:layout_width="wrap_content"
+							android:layout_height="wrap_content"
+							android:layout_marginTop="5dp"
+							android:fontFamily="@font/crimson_pro"
+							android:text="The Holy Bible"
+							android:textColor="@color/colorTextPrimary"
+							android:textSize="20sp"
+							android:textStyle="bold" />
+
+						<TextView
+							android:layout_width="wrap_content"
+							android:layout_height="wrap_content"
+							android:layout_marginTop="2dp"
+							android:fontFamily="@font/crimson_pro"
+							android:text="Mme Ŋwed Abasi • Parallel Efik &amp; English"
+							android:textColor="@color/colorTextSecondary"
+							android:textSize="13sp"
+							android:textStyle="italic" />
+
+						<TextView
+							android:layout_width="wrap_content"
+							android:layout_height="wrap_content"
+							android:layout_marginTop="6dp"
+							android:fontFamily="sans-serif"
+							android:text="The Old and New Testaments arranged for parallel devotional reading, study, and language preservation."
+							android:textColor="@color/colorTextSecondary"
+							android:textSize="12sp"
+							android:lineSpacingMultiplier="1.22" />
+
+						<TextView
+							android:layout_width="wrap_content"
+							android:layout_height="wrap_content"
+							android:layout_marginTop="10dp"
+							android:fontFamily="sans-serif-medium"
+							android:text="Open Scripture →"
+							android:textColor="@color/colorAntiqueGold"
+							android:textSize="12sp" />
+					</LinearLayout>
+				</LinearLayout>
+			</FrameLayout>
+
+			<!-- Section Label: Hymnals -->
+			<LinearLayout
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:gravity="center_vertical"
+				android:orientation="horizontal"
+				android:layout_marginBottom="12dp">
+
+				<TextView
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:fontFamily="sans-serif-medium"
+					android:text="HYMNALS &amp; SPIRITUAL SONGS"
+					android:textColor="@color/colorTextTertiary"
+					android:textSize="10.5sp"
+					android:letterSpacing="0.1" />
+
+				<View
+					android:layout_width="match_parent"
+					android:layout_height="1dp"
+					android:layout_marginStart="12dp"
+					android:background="@color/colorCardBorder" />
+			</LinearLayout>
+
+			<!-- Editorial List of Hymn Collections with Liturgical Spines -->
+			<LinearLayout
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:orientation="vertical">
+
+				<!-- 2. Songs of the Church (button1 - data-spine="burgundy") -->
+				<FrameLayout
+					android:id="@+id/button1"
+					android:layout_width="match_parent"
+					android:layout_height="wrap_content"
+					android:clickable="true"
+					android:focusable="true"
+					android:foreground="?android:attr/selectableItemBackground"
+					android:background="@drawable/bg_search_bar"
+					android:layout_marginBottom="10dp">
+
+					<LinearLayout
+						android:layout_width="match_parent"
+						android:layout_height="wrap_content"
+						android:orientation="horizontal">
+
+						<!-- Burgundy Liturgical Spine Accent -->
+						<View
+							android:layout_width="4dp"
+							android:layout_height="match_parent"
+							android:background="@color/colorSpineBurgundy" />
+
+						<LinearLayout
+							android:layout_width="match_parent"
+							android:layout_height="wrap_content"
+							android:orientation="horizontal"
+							android:gravity="center_vertical"
+							android:paddingVertical="14dp"
+							android:paddingHorizontal="14dp">
+
+							<TextView
+								android:layout_width="28dp"
+								android:layout_height="wrap_content"
+								android:fontFamily="@font/crimson_pro"
+								android:text="II."
+								android:textColor="@color/colorAntiqueGold"
+								android:textSize="15sp"
+								android:textStyle="bold" />
+
+							<LinearLayout
+								android:layout_width="0dp"
+								android:layout_height="wrap_content"
+								android:layout_weight="1"
+								android:layout_marginStart="8dp"
+								android:orientation="vertical">
+
+								<TextView
+									android:layout_width="wrap_content"
+									android:layout_height="wrap_content"
+									android:fontFamily="@font/crimson_pro"
+									android:text="Songs of the Church"
+									android:textColor="@color/colorTextPrimary"
+									android:textSize="16.5sp"
+									android:textStyle="bold" />
+
+								<TextView
+									android:layout_width="wrap_content"
+									android:layout_height="wrap_content"
+									android:layout_marginTop="2dp"
+									android:fontFamily="sans-serif"
+									android:text="Standard English hymnal with complete verses &amp; chorus"
+									android:textColor="@color/colorTextSecondary"
+									android:textSize="12sp" />
+							</LinearLayout>
+
+							<TextView
+								android:layout_width="wrap_content"
+								android:layout_height="wrap_content"
+								android:fontFamily="@font/crimson_pro"
+								android:text="→"
+								android:textColor="@color/colorTextTertiary"
+								android:textSize="15sp" />
+						</LinearLayout>
+					</LinearLayout>
+				</FrameLayout>
+
+				<!-- 3. Ikwọ Efik (button2 - data-spine="emerald") -->
+				<FrameLayout
+					android:id="@+id/button2"
+					android:layout_width="match_parent"
+					android:layout_height="wrap_content"
+					android:clickable="true"
+					android:focusable="true"
+					android:foreground="?android:attr/selectableItemBackground"
+					android:background="@drawable/bg_search_bar"
+					android:layout_marginBottom="10dp">
+
+					<LinearLayout
+						android:layout_width="match_parent"
+						android:layout_height="wrap_content"
+						android:orientation="horizontal">
+
+						<!-- Emerald Liturgical Spine Accent -->
+						<View
+							android:layout_width="4dp"
+							android:layout_height="match_parent"
+							android:background="@color/colorSpineEmerald" />
+
+						<LinearLayout
+							android:layout_width="match_parent"
+							android:layout_height="wrap_content"
+							android:orientation="horizontal"
+							android:gravity="center_vertical"
+							android:paddingVertical="14dp"
+							android:paddingHorizontal="14dp">
+
+							<TextView
+								android:layout_width="28dp"
+								android:layout_height="wrap_content"
+								android:fontFamily="@font/crimson_pro"
+								android:text="III."
+								android:textColor="@color/colorAntiqueGold"
+								android:textSize="15sp"
+								android:textStyle="bold" />
+
+							<LinearLayout
+								android:layout_width="0dp"
+								android:layout_height="wrap_content"
+								android:layout_weight="1"
+								android:layout_marginStart="8dp"
+								android:orientation="vertical">
+
+								<TextView
+									android:layout_width="wrap_content"
+									android:layout_height="wrap_content"
+									android:fontFamily="@font/crimson_pro"
+									android:text="Ŋwed Ikwọ"
+									android:textColor="@color/colorTextPrimary"
+									android:textSize="16.5sp"
+									android:textStyle="bold" />
+
+								<TextView
+									android:layout_width="wrap_content"
+									android:layout_height="wrap_content"
+									android:layout_marginTop="2dp"
+									android:fontFamily="sans-serif"
+									android:text="Traditional Efik hymnal with complete verses &amp; chorus"
+									android:textColor="@color/colorTextSecondary"
+									android:textSize="12sp" />
+							</LinearLayout>
+
+							<TextView
+								android:layout_width="wrap_content"
+								android:layout_height="wrap_content"
+								android:fontFamily="@font/crimson_pro"
+								android:text="→"
+								android:textColor="@color/colorTextTertiary"
+								android:textSize="15sp" />
+						</LinearLayout>
+					</LinearLayout>
+				</FrameLayout>
+
+				<!-- 4. New Hymns & Sheet Music (button3 - data-spine="navy") -->
+				<FrameLayout
+					android:id="@+id/button3"
+					android:layout_width="match_parent"
+					android:layout_height="wrap_content"
+					android:clickable="true"
+					android:focusable="true"
+					android:foreground="?android:attr/selectableItemBackground"
+					android:background="@drawable/bg_search_bar"
+					android:layout_marginBottom="10dp">
+
+					<LinearLayout
+						android:layout_width="match_parent"
+						android:layout_height="wrap_content"
+						android:orientation="horizontal">
+
+						<!-- Navy Liturgical Spine Accent -->
+						<View
+							android:layout_width="4dp"
+							android:layout_height="match_parent"
+							android:background="@color/colorSpineNavy" />
+
+						<LinearLayout
+							android:layout_width="match_parent"
+							android:layout_height="wrap_content"
+							android:orientation="horizontal"
+							android:gravity="center_vertical"
+							android:paddingVertical="14dp"
+							android:paddingHorizontal="14dp">
+
+							<TextView
+								android:layout_width="28dp"
+								android:layout_height="wrap_content"
+								android:fontFamily="@font/crimson_pro"
+								android:text="IV."
+								android:textColor="@color/colorAntiqueGold"
+								android:textSize="15sp"
+								android:textStyle="bold" />
+
+							<LinearLayout
+								android:layout_width="0dp"
+								android:layout_height="wrap_content"
+								android:layout_weight="1"
+								android:layout_marginStart="8dp"
+								android:orientation="vertical">
+
+								<TextView
+									android:layout_width="wrap_content"
+									android:layout_height="wrap_content"
+									android:fontFamily="@font/crimson_pro"
+									android:text="New Hymns &amp; Sheet Music"
+									android:textColor="@color/colorTextPrimary"
+									android:textSize="16.5sp"
+									android:textStyle="bold" />
+
+								<TextView
+									android:layout_width="wrap_content"
+									android:layout_height="wrap_content"
+									android:layout_marginTop="2dp"
+									android:fontFamily="sans-serif"
+									android:text="Contemporary songs &amp; sheet music supplements"
+									android:textColor="@color/colorTextSecondary"
+									android:textSize="12sp" />
+							</LinearLayout>
+
+							<TextView
+								android:layout_width="wrap_content"
+								android:layout_height="wrap_content"
+								android:fontFamily="@font/crimson_pro"
+								android:text="→"
+								android:textColor="@color/colorTextTertiary"
+								android:textSize="15sp" />
+						</LinearLayout>
+					</LinearLayout>
+				</FrameLayout>
+
+			</LinearLayout>
+
+		</LinearLayout>
+	</ScrollView>
+</LinearLayout>
