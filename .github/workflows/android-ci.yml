@@ -3,6 +3,7 @@ name: Android CI & Release
 on:
   push:
     branches: [ main ]
+    tags: [ 'v*' ]
   pull_request:
     branches: [ main ]
   workflow_dispatch:
@@ -12,12 +13,30 @@ permissions:
 
 jobs:
   build:
-    name: Build & Publish ACC Open v1.4.1 APKs
+    name: Verify, Test & Build ACC Open
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Verify release tag is merged into main & matches versionName
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          STATUS=$(gh api "repos/${{ github.repository }}/compare/main...${{ github.sha }}" --jq '.status')
+          echo "Tag commit ${{ github.sha }} vs main: $STATUS"
+          if [ "$STATUS" != "identical" ] && [ "$STATUS" != "behind" ]; then
+            echo "ERROR: Refusing to release tag ${{ github.ref_name }} — commit is not merged into main (status=$STATUS)."
+            exit 1
+          fi
+          APP_VER=$(grep -E 'versionName[[:space:]]+"[^"]+"' app/build.gradle | head -n 1 | sed -E 's/.*"([^"]+)".*/\1/')
+          TAG_VER="${GITHUB_REF_NAME#v}"
+          if [ "$APP_VER" != "$TAG_VER" ]; then
+            echo "ERROR: Tag ${GITHUB_REF_NAME} does not match app/build.gradle versionName \"$APP_VER\"."
+            exit 1
+          fi
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -31,41 +50,36 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
 
+      - name: Run Feature Guard & Unit Tests
+        run: |
+          python3 tools/verify_features.py
+          ./gradlew testDebugUnitTest --no-daemon --stacktrace
+
       - name: Build Signed Release & Debug APKs
         run: |
+          APP_VER=$(grep -E 'versionName[[:space:]]+"[^"]+"' app/build.gradle | head -n 1 | sed -E 's/.*"([^"]+)".*/\1/')
           ./gradlew assembleRelease assembleDebug --no-daemon --stacktrace
           mkdir -p dist
-          cp app/build/outputs/apk/release/app-release.apk dist/ACC-Open-v1.4.1-release.apk
-          cp app/build/outputs/apk/debug/app-debug.apk dist/ACC-Open-v1.4.1-debug.apk
+          cp app/build/outputs/apk/release/app-release.apk "dist/ACC-Open-v${APP_VER}-release.apk"
+          cp app/build/outputs/apk/debug/app-debug.apk "dist/ACC-Open-v${APP_VER}-debug.apk"
           ls -lh dist/
 
       - name: Upload APK Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ACC-Open-v1.4.1-apks
+          name: ACC-Open-apks-${{ github.run_number }}
           path: |
-            dist/ACC-Open-v1.4.1-release.apk
-            dist/ACC-Open-v1.4.1-debug.apk
+            dist/*.apk
           if-no-files-found: error
 
-      - name: Publish v1.4.1 GitHub Release
-        if: github.event_name != 'pull_request'
+      - name: Publish GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.4.1
-          name: "v1.4.1 — Fixed PDF Score Rendering & Split .acc Pack Support"
+          tag_name: ${{ github.ref_name }}
+          name: "ACC Open ${{ github.ref_name }}"
+          generate_release_notes: true
           draft: false
           prerelease: false
-          body: |
-            ## A Church Companion — Open Edition v1.4.1 (`com.trust.acc.open`, `versionCode 9`)
-
-            ### ✦ Key Fixes
-            - **Fixed blank musical score rendering:** Restored `Bitmap.Config.ARGB_8888` required by Android `PdfRenderer.Page.render()` (capped at 1800px + OOM fallback) and replaced `setImageBitmap(null)` with `setImageDrawable(null)` + 220dp loading placeholder in `PdfPageAdapter`.
-            - **Split `.acc` Pack Support:** Seamlessly import separate text/Bible packs (`acc_hymns_and_bibles.acc`) and PDF sheet-music packs (`acc_musical_scores.acc`) independently or in any order with automatic alphabetical sorting and deduplication.
-
-            ### 📦 Downloadable APKs
-            - **`ACC-Open-v1.4.1-release.apk`** (`com.trust.acc.open` — installs side-by-side alongside `com.trust.acc`)
-            - **`ACC-Open-v1.4.1-debug.apk`**
           files: |
-            dist/ACC-Open-v1.4.1-release.apk
-            dist/ACC-Open-v1.4.1-debug.apk
+            dist/*.apk
