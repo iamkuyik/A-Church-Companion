@@ -1,6 +1,8 @@
 package com.trust.acc;
 
 import android.app.Activity;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -15,6 +17,7 @@ import android.view.WindowManager;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.trust.acc.databinding.LyricsBinding;
@@ -79,6 +82,8 @@ public class LyricsActivity extends AppCompatActivity {
 
 		binding.btnAa.setOnClickListener(v -> showTypographyPopover());
 
+		binding.btnShare.setOnClickListener(v -> showShareOptionsDialog());
+
 		// Density-scaled horizontal swipe detector for Previous / Next Hymn
 		final float density = getResources().getDisplayMetrics().density;
 		final float swipeThresholdPx = 56f * density;
@@ -127,6 +132,32 @@ public class LyricsActivity extends AppCompatActivity {
 				}
 			}
 		});
+	}
+
+	private void showShareOptionsDialog() {
+		String title = currentRawTitle != null ? currentRawTitle.trim() : "";
+		String lyrics = currentRawLyrics != null ? currentRawLyrics.trim() : "";
+		if (title.isEmpty() && lyrics.isEmpty()) return;
+		final String formatted = title + "\n\n" + lyrics;
+		String[] options = new String[]{"Share Hymn", "Copy Lyrics"};
+		new AlertDialog.Builder(this)
+				.setTitle(title.isEmpty() ? "Hymn" : title)
+				.setItems(options, (dialog, which) -> {
+					if (which == 0) {
+						Intent shareIntent = new Intent(Intent.ACTION_SEND);
+						shareIntent.setType("text/plain");
+						shareIntent.putExtra(Intent.EXTRA_SUBJECT, title);
+						shareIntent.putExtra(Intent.EXTRA_TEXT, formatted);
+						startActivity(Intent.createChooser(shareIntent, "Share Hymn"));
+					} else {
+						ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+						if (cm != null) {
+							cm.setPrimaryClip(ClipData.newPlainText("Hymn Lyrics", formatted));
+							Toast.makeText(getApplicationContext(), "Lyrics copied to clipboard", Toast.LENGTH_SHORT).show();
+						}
+					}
+				})
+				.show();
 	}
 
 	@Override

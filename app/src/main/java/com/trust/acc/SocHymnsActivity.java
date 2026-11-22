@@ -77,6 +77,17 @@ public class SocHymnsActivity extends AppCompatActivity {
 			}
 		});
 
+		View.OnClickListener clearSearchListener = v -> {
+			binding.etSearch.setText("");
+			binding.etSearch.clearFocus();
+			InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+			if (imm != null) {
+				imm.hideSoftInputFromWindow(binding.etSearch.getWindowToken(), 0);
+			}
+		};
+		binding.btnClearSearch.setOnClickListener(clearSearchListener);
+		binding.btnClearEmpty.setOnClickListener(clearSearchListener);
+
 		binding.etSearch.addTextChangedListener(new TextWatcher() {
 			@Override
 			public void onTextChanged(CharSequence s, int start, int before, int count) {
@@ -84,6 +95,7 @@ public class SocHymnsActivity extends AppCompatActivity {
 					searchHandler.removeCallbacks(pendingSearch);
 				}
 				final String query = s != null ? s.toString() : "";
+				binding.btnClearSearch.setVisibility(query.trim().isEmpty() ? View.GONE : View.VISIBLE);
 				pendingSearch = () -> applyFilter(query);
 				searchHandler.postDelayed(pendingSearch, 110);
 			}
@@ -132,6 +144,11 @@ public class SocHymnsActivity extends AppCompatActivity {
 		if (adapter != null) {
 			adapter.notifyDataSetChanged();
 		}
+		boolean hasQuery = rawQuery != null && !rawQuery.trim().isEmpty();
+		binding.btnClearSearch.setVisibility(hasQuery ? View.VISIBLE : View.GONE);
+		boolean isEmpty = listmap.isEmpty() && !search_backup.isEmpty();
+		binding.layoutEmpty.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
+		binding.listview1.setVisibility(isEmpty ? View.GONE : View.VISIBLE);
 	}
 
 	public class Listview1Adapter extends BaseAdapter {

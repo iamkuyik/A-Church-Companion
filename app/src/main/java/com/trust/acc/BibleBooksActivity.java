@@ -1,5 +1,6 @@
 package com.trust.acc;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
@@ -8,6 +9,7 @@ import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.BaseAdapter;
 import android.widget.Toast;
 
@@ -68,6 +70,17 @@ public class BibleBooksActivity extends AppCompatActivity {
 		binding.tabOt.setOnClickListener(v -> switchTestament("ot"));
 
 		binding.tabNt.setOnClickListener(v -> switchTestament("nt"));
+
+		View.OnClickListener clearSearchListener = v -> {
+			binding.etSearch.setText("");
+			binding.etSearch.clearFocus();
+			InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+			if (imm != null) {
+				imm.hideSoftInputFromWindow(binding.etSearch.getWindowToken(), 0);
+			}
+		};
+		binding.btnClearSearch.setOnClickListener(clearSearchListener);
+		binding.btnClearEmpty.setOnClickListener(clearSearchListener);
 
 		binding.etSearch.addTextChangedListener(new TextWatcher() {
 			@Override
@@ -228,6 +241,7 @@ public class BibleBooksActivity extends AppCompatActivity {
 	private void filterBooks() {
 		books_list.clear();
 		String rawQuery = binding.etSearch.getText() != null ? binding.etSearch.getText().toString().trim() : "";
+		binding.btnClearSearch.setVisibility(rawQuery.isEmpty() ? View.GONE : View.VISIBLE);
 		String query = EfikHymnsActivity.normalizeEfik(rawQuery);
 		String queryWithN = query.replace("ng", "n");
 
@@ -256,6 +270,10 @@ public class BibleBooksActivity extends AppCompatActivity {
 		if (adapter != null) {
 			adapter.notifyDataSetChanged();
 		}
+
+		boolean isEmpty = books_list.isEmpty() && !search_backup.isEmpty();
+		binding.layoutEmpty.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
+		binding.listview1.setVisibility(isEmpty ? View.GONE : View.VISIBLE);
 	}
 
 	private void initializeLogic() {
