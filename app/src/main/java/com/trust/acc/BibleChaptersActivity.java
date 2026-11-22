@@ -49,6 +49,7 @@ public class BibleChaptersActivity extends AppCompatActivity {
 			intent.putExtra("book_name", getIntent().getStringExtra("book_name"));
 			intent.putExtra("name_efi", getIntent().getStringExtra("name_efi"));
 			intent.putExtra("chapter_number", chObj.toString());
+			intent.putExtra("chapter_count", getIntent().getStringExtra("chapter_count"));
 			startActivity(intent);
 		});
 	}

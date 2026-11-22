@@ -62,6 +62,24 @@ public final class AssetUtil {
     }
 
     /**
+     * Looks up the total number of chapters for a book from the cached Bible index.
+     */
+    public static int getBookChapterCount(Context context, int bookId) {
+        try {
+            ArrayList<HashMap<String, Object>> books = getCachedBibleBooks(context);
+            for (int i = 0; i < books.size(); i++) {
+                HashMap<String, Object> b = books.get(i);
+                int id = b.get("_id_int") instanceof Integer ? (Integer) b.get("_id_int") : -1;
+                if (id == bookId) {
+                    int ch = b.get("_chap_count") instanceof Integer ? (Integer) b.get("_chap_count") : 50;
+                    return ch > 0 ? ch : 50;
+                }
+            }
+        } catch (Exception ignored) {}
+        return 50;
+    }
+
+    /**
      * Reads an entire asset into a UTF-8 String safely without relying on InputStream.available().
      */
     public static String loadAssetString(Context context, String assetName) throws IOException {
