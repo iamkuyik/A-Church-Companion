@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.regex.Pattern;
 
 /**
  * Utility for safe, high-performance asset loading, dynamic Bible translation detection,
@@ -33,6 +34,11 @@ public final class AssetUtil {
     private static final String KEY_IMPORTED_BIBLE_PACK = "imported_bible_pack";
     /** Increment whenever bundled bible_bilingual.db content/schema is updated in assets. */
     private static final int CURRENT_BIBLE_DB_VERSION = 3;
+
+    private static final Pattern BRACKET_FOOTNOTE_PATTERN = Pattern.compile("\\s*\\[\\d+\\]|\\s*\\[\\]");
+    private static final Pattern BBE_MARKER_PATTERN = Pattern.compile("\\\\\\d+:\\d+\\\\\\s*");
+    private static final Pattern SPACE_BEFORE_PUNCT_PATTERN = Pattern.compile("\\s+([,.;:?!\\u201d\\u2019)])");
+    private static final Pattern MULTI_SPACE_VERSE_PATTERN = Pattern.compile("  +");
 
     private static volatile SQLiteDatabase cachedBibleDb = null;
     private static volatile Set<String> cachedAvailableColumns = null;
@@ -311,6 +317,24 @@ public final class AssetUtil {
     }
 
     /**
+     * Strips stray bracketed footnote markers ([1], []), embedded BBE \ch:v\ tags, and RSV
+     * grave-accent quotes cleanly at read time across both bundled and imported SQLite databases.
+     */
+    public static String cleanVerseText(String raw) {
+        if (raw == null || raw.isEmpty()) return "";
+        if (raw.indexOf('[') < 0 && raw.indexOf('\\') < 0 && raw.indexOf('`') < 0) return raw;
+        String cleaned = raw.replace('`', '\'');
+        if (cleaned.indexOf('\\') >= 0) {
+            cleaned = BBE_MARKER_PATTERN.matcher(cleaned).replaceAll("");
+        }
+        if (cleaned.indexOf('[') >= 0) {
+            cleaned = BRACKET_FOOTNOTE_PATTERN.matcher(cleaned).replaceAll("");
+        }
+        cleaned = SPACE_BEFORE_PUNCT_PATTERN.matcher(cleaned).replaceAll("$1");
+        return MULTI_SPACE_VERSE_PATTERN.matcher(cleaned).replaceAll(" ").trim();
+    }
+
+    /**
      * Queries a single chapter's verses (<1ms) from the WITHOUT ROWID primary-key-ordered
      * SQLite Bible database, dynamically reading whichever translation columns exist.
      */
@@ -344,17 +368,17 @@ public final class AssetUtil {
                 while (cursor.moveToNext()) {
                     HashMap<String, Object> vMap = new HashMap<>(8);
                     int verseNum = cursor.getInt(0);
-                    String efi = cursor.isNull(1) ? "" : cursor.getString(1);
-                    String kjv = cursor.isNull(2) ? "" : cursor.getString(2);
-                    String bbe = cursor.isNull(3) ? "" : cursor.getString(3);
+                    String efi = cleanVerseText(cursor.isNull(1) ? "" : cursor.getString(1));
+                    String kjv = cleanVerseText(cursor.isNull(2) ? "" : cursor.getString(2));
+                    String bbe = cleanVerseText(cursor.isNull(3) ? "" : cursor.getString(3));
 
                     vMap.put("verse_num", String.valueOf(verseNum));
                     vMap.put("efi", efi);
                     vMap.put("kjv", kjv);
                     vMap.put("bbe", bbe);
                     if (hasRsv && hasNiv) {
-                        String rsv = cursor.isNull(4) ? "" : cursor.getString(4);
-                        String niv = cursor.isNull(5) ? "" : cursor.getString(5);
+                        String rsv = cleanVerseText(cursor.isNull(4) ? "" : cursor.getString(4));
+                        String niv = cleanVerseText(cursor.isNull(5) ? "" : cursor.getString(5));
                         vMap.put("rsv", rsv);
                         vMap.put("niv", niv);
                     }

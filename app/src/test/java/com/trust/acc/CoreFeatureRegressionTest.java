@@ -110,4 +110,12 @@ public class CoreFeatureRegressionTest {
         // Blocked when velocity is too slow
         assertNull(BibleBooksActivity.resolveSwipeTestament("ot", false, -200f, 0f, -100f, 100f, 90f, 200f));
     }
+
+    @Test
+    public void assetUtil_cleanVerseTextStripsFootnotesMarkersAndBackticks() {
+        assertEquals("In the beginning, God created.", AssetUtil.cleanVerseText("In the beginning [1] , God created []."));
+        assertEquals("And he said, 'Peace be with you.'", AssetUtil.cleanVerseText("\\1:2\\ And he said, `Peace be with you.'"));
+        assertEquals("Plain verse unchanged.", AssetUtil.cleanVerseText("Plain verse unchanged."));
+        assertEquals("", AssetUtil.cleanVerseText(null));
+    }
 }

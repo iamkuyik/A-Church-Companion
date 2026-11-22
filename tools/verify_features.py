@@ -187,9 +187,22 @@ def check_required_patterns(errors: list[str], activities: list[str]) -> None:
             ],
         ),
         (
+            JAVA_DIR / "AssetUtil.java",
+            [
+                ("cleanVerseText", "live scripture footnote/marker sanitization"),
+            ],
+        ),
+        (
+            RES_DIR / "layout" / "verse_row.xml",
+            [
+                ('includeFontPadding="false"', "calibrated first-line Crimson Pro spacing"),
+            ],
+        ),
+        (
             RES_DIR / "layout" / "new_lyrics.xml",
             [
                 ("com.trust.acc.ZoomableRecyclerView", "zoomable PDF score recycler view"),
+                ('includeFontPadding="false"', "calibrated first-line Crimson Pro spacing"),
             ],
         ),
     ]
