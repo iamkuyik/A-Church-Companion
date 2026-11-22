@@ -8,6 +8,7 @@ import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -87,5 +88,26 @@ public class CoreFeatureRegressionTest {
     public void savedManager_generatesStableBookmarkIds() {
         assertEquals("bible_verse_10_1_1", SavedManager.getVerseBookmarkId("10", 1, "1"));
         assertEquals("soc_12. amazing grace", SavedManager.getHymnBookmarkId("soc", "  12. Amazing Grace "));
+    }
+
+    @Test
+    public void bibleBooksSwipe_switchesBetweenOldAndNewTestament() {
+        // Swipe left on OT -> switches to NT
+        assertEquals("nt", BibleBooksActivity.resolveSwipeTestament("ot", false, -200f, 10f, -500f, 100f, 90f, 200f));
+        // Swipe right on NT -> switches to OT
+        assertEquals("ot", BibleBooksActivity.resolveSwipeTestament("nt", false, 200f, -10f, 500f, 100f, 90f, 200f));
+        // Swiping past boundaries is a no-op
+        assertNull(BibleBooksActivity.resolveSwipeTestament("ot", false, 200f, 0f, 500f, 100f, 90f, 200f));
+        assertNull(BibleBooksActivity.resolveSwipeTestament("nt", false, -200f, 0f, -500f, 100f, 90f, 200f));
+    }
+
+    @Test
+    public void bibleBooksSwipe_blockedDuringSearchOrVerticalScroll() {
+        // Blocked while search query is active
+        assertNull(BibleBooksActivity.resolveSwipeTestament("ot", true, -200f, 0f, -500f, 100f, 90f, 200f));
+        // Blocked when vertical movement exceeds vertical lock
+        assertNull(BibleBooksActivity.resolveSwipeTestament("ot", false, -200f, 100f, -500f, 100f, 90f, 200f));
+        // Blocked when velocity is too slow
+        assertNull(BibleBooksActivity.resolveSwipeTestament("ot", false, -200f, 0f, -100f, 100f, 90f, 200f));
     }
 }

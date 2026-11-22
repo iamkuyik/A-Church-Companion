@@ -107,6 +107,9 @@ def check_required_patterns(errors: list[str], activities: list[str]) -> None:
                 ("tabNt.setOnClickListener", "New Testament tab handler"),
                 ("STATE_TESTAMENT", "saved testament instance state"),
                 ("etSearch.addTextChangedListener", "cross-testament live book search"),
+                ("GestureDetector", "horizontal OT/NT swipe detector"),
+                ("dispatchTouchEvent", "touch dispatch for OT/NT swipe"),
+                ("resolveSwipeTestament", "OT/NT swipe direction and search guard"),
             ],
         ),
         (

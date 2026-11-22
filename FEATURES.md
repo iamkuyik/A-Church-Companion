@@ -16,7 +16,8 @@ This file is the source of truth for user-facing behaviors in A Church Companion
 
 ### Holy Bible
 - **`BibleBooksActivity`**:
-  - Sticky Old Testament (`tabOt`, `id < 470`) and New Testament (`tabNt`, `id >= 470`) pill tabs with saved instance state (`STATE_TESTAMENT`).
+  - Sticky Old Testament (`tabOt`, `id < 470`) and New Testament (`tabNt`, `id >= 470`) pill tabs with saved instance state (`STATE_TESTAMENT`) and preserved per-testament scroll positions.
+  - Horizontal swipe (`GestureDetector` + `dispatchTouchEvent` with `ACTION_CANCEL`) to switch between Old Testament (swipe left → NT) and New Testament (swipe right → OT) when search is empty (ignores touches starting inside `etSearch`).
   - Live search (`etSearch`) across **both** Old and New Testaments (English + Efik with diacritic and `ng`/`n` normalization).
   - Fast scroll enabled on book list; tapping a book opens `BibleChaptersActivity`.
 - **`BibleChaptersActivity`**:
@@ -59,7 +60,7 @@ This file is the source of truth for user-facing behaviors in A Church Companion
 
 These features were shipped in the `v1.3.2` APK release (`24b1705`) on an unmerged branch and were not on `main` when `v1.4.0` branched from `v1.3.1` (`5eab027`). Restore them one small, focused PR at a time, moving each item into **Shipped on `main`** (with tests + `tools/verify_features.py` checks) once merged:
 
-- [ ] **OT / NT horizontal swipe** in `BibleBooksActivity` (swipe left/right between Old Testament and New Testament when search is empty).
+- [x] **OT / NT horizontal swipe** in `BibleBooksActivity` (swipe left/right between Old Testament and New Testament when search is empty).
 - [ ] **Bible Books clear-search (`×`) button & empty search state** in `BibleBooksActivity` / `bible_books.xml`.
 - [ ] **In-app `# 123` Hymn Quick-Dial modal** (`QuickDialHelper` + `dialog_quick_dial.xml`) on Hymn List and Hymn Reader screens.
 - [ ] **Keep-Screen-On (`FLAG_KEEP_SCREEN_ON`)** in `BibleReaderActivity`, `LyricsActivity`, and `NewLyricsActivity`.
