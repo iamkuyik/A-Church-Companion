@@ -12,7 +12,9 @@ This file is the source of truth for user-facing behaviors in A Church Companion
 - **`MainActivity`** *(sole `LAUNCHER` in `AndroidManifest.xml`)*:
   - Navigation cards for Songs of the Church (`SocHymnsActivity`), Efik Hymnal (`EfikHymnsActivity`), New Hymns (`NewHymnsActivity`), Holy Bible (`BibleBooksActivity`), and Saved Bookmarks (`SavedActivity`).
   - Instant 1-tap Light/Dark theme toggle (`btnTheme`); long-press resets to System Default.
+  - Triggers asynchronous background preloading of all 3 hymnals (`HymnRepository.preloadAllAsync()`) and Bible index (`AssetUtil.preloadAsync()`) on launch.
 - **Edge-to-Edge System Bars (`SystemBarUtil`)**: Every Activity calls `SystemBarUtil.applyEdgeToEdge(...)` in `onCreate` and `SystemBarUtil.updateSystemBarAppearance(...)` in `onResume`.
+- **Keep-Screen-On (`FLAG_KEEP_SCREEN_ON`)**: Enabled in `BibleReaderActivity`, `LyricsActivity`, and `NewLyricsActivity` so the screen stays awake during worship and reading.
 
 ### Holy Bible
 - **`BibleBooksActivity`**:
@@ -62,8 +64,8 @@ These features were shipped in the `v1.3.2` APK release (`24b1705`) on an unmerg
 
 - [x] **OT / NT horizontal swipe** in `BibleBooksActivity` (swipe left/right between Old Testament and New Testament when search is empty).
 - [ ] **Bible Books clear-search (`×`) button & empty search state** in `BibleBooksActivity` / `bible_books.xml`.
-- [ ] **In-app `# 123` Hymn Quick-Dial modal** (`QuickDialHelper` + `dialog_quick_dial.xml`) on Hymn List and Hymn Reader screens.
-- [ ] **Keep-Screen-On (`FLAG_KEEP_SCREEN_ON`)** in `BibleReaderActivity`, `LyricsActivity`, and `NewLyricsActivity`.
+- [ ] **In-app `# 123` Hymn Quick-Dial modal** *(skipped intentionally — existing `123`/`ABC` keyboard toggle covers numeric lookup)*.
+- [x] **Keep-Screen-On (`FLAG_KEEP_SCREEN_ON`)** in `BibleReaderActivity`, `LyricsActivity`, and `NewLyricsActivity`.
 - [ ] **Bottom `‹ PREV` / `NEXT ›` navigation bars & 5-column Chapter Jump modal** in `BibleReaderActivity` (and bottom prev/next hymn indicator in `LyricsActivity` / `NewLyricsActivity`).
 - [ ] **Parallel View dropdown selectors (`SELECT ▾`) & one-tap `⇅ SWAP 1ST & 2ND` button** in the Bible translation picker dialog.
 - [ ] **Unified high-contrast verse bookmark + highlight styling** (`bg_verse_highlighted.xml` + inline `★ BOOKMARKED` badge).

@@ -11,6 +11,7 @@ import android.text.Html;
 import android.text.TextUtils;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
+import android.view.WindowManager;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -41,6 +42,7 @@ public class LyricsActivity extends AppCompatActivity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 		binding = LyricsBinding.inflate(getLayoutInflater());
 		setContentView(binding.getRoot());
 		SystemBarUtil.applyEdgeToEdge(this, binding.getRoot());

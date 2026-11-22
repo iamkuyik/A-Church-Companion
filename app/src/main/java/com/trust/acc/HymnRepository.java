@@ -82,6 +82,19 @@ public class HymnRepository {
         ensureDirectories();
     }
 
+    /**
+     * Warms all three hymnal caches in the background on startup so first open is instant.
+     */
+    public void preloadAllAsync() {
+        AccApplication.ioExecutor().execute(() -> {
+            try {
+                getHymns(CATEGORY_SOC);
+                getHymns(CATEGORY_EFIK);
+                getHymns(CATEGORY_NEW);
+            } catch (Exception ignored) {}
+        });
+    }
+
     private void ensureDirectories() {
         File scoresDir = new File(mContext.getFilesDir(), SCORES_DIR);
         if (!scoresDir.exists()) {

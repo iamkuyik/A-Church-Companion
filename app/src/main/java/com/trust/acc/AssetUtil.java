@@ -43,6 +43,19 @@ public final class AssetUtil {
     private AssetUtil() {}
 
     /**
+     * Warms the bible_index.json cache asynchronously on startup without blocking the UI thread.
+     */
+    public static void preloadAsync(Context context) {
+        if (context == null) return;
+        final Context appContext = context.getApplicationContext();
+        AccApplication.ioExecutor().execute(() -> {
+            try {
+                getCachedBibleBooks(appContext);
+            } catch (Exception ignored) {}
+        });
+    }
+
+    /**
      * Reads an entire asset into a UTF-8 String safely without relying on InputStream.available().
      */
     public static String loadAssetString(Context context, String assetName) throws IOException {
