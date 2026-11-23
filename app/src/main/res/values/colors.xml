@@ -32,6 +32,8 @@
 	<color name="colorBadgeBg">#EFE8DA</color>
 	<color name="colorBadgeText">#9A722C</color>
 	<color name="colorSubtleGoldStroke">#559A722C</color>
+	<color name="colorVerseHighlightBg">#FDE68A</color>
+	<color name="colorVerseHighlightStroke">#D97706</color>
 	<color name="colorControlHighlight">#EAE2D3</color>
 	<color name="colorControlNormal">#787167</color>
 </resources>

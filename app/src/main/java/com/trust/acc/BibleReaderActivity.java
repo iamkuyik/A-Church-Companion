@@ -64,9 +64,11 @@ public class BibleReaderActivity extends AppCompatActivity {
 	private String currentBookId = "10";
 	private String currentBookName = "Genesis";
 	private int currentChapterNumber = 1;
+	private int totalChaptersInBook = 50;
 	private String currentNameEfi = "GENESIS";
 	private String targetVerse = null;
 	private final HashSet<String> bookmarkedVersesInChapter = new HashSet<>();
+	private int selectableItemBackgroundResId = 0;
 	private GestureDetector gestureDetector;
 
 	private final ExecutorService chapterExecutor = Executors.newSingleThreadExecutor();
@@ -76,6 +78,9 @@ public class BibleReaderActivity extends AppCompatActivity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+		TypedValue outValue = new TypedValue();
+		getTheme().resolveAttribute(android.R.attr.selectableItemBackground, outValue, true);
+		selectableItemBackgroundResId = outValue.resourceId;
 		binding = BibleReaderBinding.inflate(getLayoutInflater());
 		setContentView(binding.getRoot());
 		SystemBarUtil.applyEdgeToEdge(this, binding.getRoot());
@@ -104,6 +109,8 @@ public class BibleReaderActivity extends AppCompatActivity {
 
 		binding.btnBack.setOnClickListener(_view -> finish());
 
+		binding.headerTitle.setOnClickListener(v -> showChapterJumpDialog());
+
 		binding.btnVersionSelector.setOnClickListener(v -> showVersionPickerDialog());
 
 		binding.btnBookmark.setOnClickListener(v -> toggleBookmark());
@@ -115,10 +122,20 @@ public class BibleReaderActivity extends AppCompatActivity {
 			return true;
 		});
 
-		// Reader ☰ menu (Prev/Next Chapter, Bookmarks, Translations & View Mode, Typography)
-		binding.btnReaderMenu.setOnClickListener(this::showReaderMenu);
-
 		binding.btnAa.setOnClickListener(v -> showTypographyPopover());
+
+		// Bottom Chapter Navigation Bar (Prev / Chapter Jump / Next)
+		binding.btnPrevChapter.setOnClickListener(v -> {
+			if (currentChapterNumber > 1) {
+				loadChapter(currentChapterNumber - 1);
+			}
+		});
+		binding.btnNextChapter.setOnClickListener(v -> {
+			if (currentChapterNumber < totalChaptersInBook) {
+				loadChapter(currentChapterNumber + 1);
+			}
+		});
+		binding.btnChapterJump.setOnClickListener(v -> showChapterJumpDialog());
 
 		// Verse actions open strictly on long-press (prevents accidental popups while scrolling)
 		binding.listview1.setOnItemLongClickListener((parent, view, position, id) -> {
@@ -150,7 +167,7 @@ public class BibleReaderActivity extends AppCompatActivity {
 							loadChapter(currentChapterNumber - 1);
 							return true;
 						}
-					} else {
+					} else if (currentChapterNumber < totalChaptersInBook) {
 						loadChapter(currentChapterNumber + 1);
 						return true;
 					}
@@ -173,6 +190,24 @@ public class BibleReaderActivity extends AppCompatActivity {
 		return super.dispatchTouchEvent(ev);
 	}
 
+	private int parseBookId() {
+		try {
+			return (int) Double.parseDouble(currentBookId);
+		} catch (Exception ignored) {
+			return 10;
+		}
+	}
+
+	private void updateChapterNavUi() {
+		binding.btnChapterJump.setText("CHAPTER " + currentChapterNumber + " OF " + totalChaptersInBook + " ▾");
+		boolean hasPrev = currentChapterNumber > 1;
+		boolean hasNext = currentChapterNumber < totalChaptersInBook;
+		binding.btnPrevChapter.setEnabled(hasPrev);
+		binding.btnPrevChapter.setAlpha(hasPrev ? 1.0f : 0.4f);
+		binding.btnNextChapter.setEnabled(hasNext);
+		binding.btnNextChapter.setAlpha(hasNext ? 1.0f : 0.4f);
+	}
+
 	private void initializeLogic(Bundle savedInstanceState) {
 		listAdapter = new Listview1Adapter(listmap);
 		binding.listview1.setAdapter(listAdapter);
@@ -182,6 +217,7 @@ public class BibleReaderActivity extends AppCompatActivity {
 		String cNum = getIntent().getStringExtra("chapter_number");
 		String efiName = getIntent().getStringExtra("name_efi");
 		String tVerse = getIntent().getStringExtra("target_verse");
+		String chapCountExtra = getIntent().getStringExtra("chapter_count");
 
 		if (bId != null && !bId.isEmpty()) currentBookId = bId;
 		if (bName != null && !bName.isEmpty()) currentBookName = bName;
@@ -197,6 +233,29 @@ public class BibleReaderActivity extends AppCompatActivity {
 			}
 		}
 
+		boolean resolvedCount = false;
+		if (chapCountExtra != null && !chapCountExtra.isEmpty()) {
+			try {
+				int parsed = (int) Double.parseDouble(chapCountExtra);
+				if (parsed > 0) {
+					totalChaptersInBook = parsed;
+					resolvedCount = true;
+				}
+			} catch (Exception ignored) {}
+		}
+		if (!resolvedCount) {
+			final int bookIdInt = parseBookId();
+			AccApplication.ioExecutor().execute(() -> {
+				int count = AssetUtil.getBookChapterCount(getApplicationContext(), bookIdInt);
+				runOnUiThread(() -> {
+					if (isFinishing() || isDestroyed()) return;
+					totalChaptersInBook = count;
+					updateChapterNavUi();
+				});
+			});
+		}
+
+		updateChapterNavUi();
 		reloadTypographyPreferences();
 		loadChapter(currentChapterNumber);
 	}
@@ -319,38 +378,140 @@ public class BibleReaderActivity extends AppCompatActivity {
 		startActivity(new Intent(this, SavedActivity.class));
 	}
 
-	/** Reader ☰ menu: Chapter navigation, Bookmarks, Translations & View Mode, Typography & Theme. */
-	private void showReaderMenu(View anchor) {
-		PopupMenu popup = new PopupMenu(this, anchor);
-		if (currentChapterNumber > 1) {
-			popup.getMenu().add(0, 4, 0, "←  Previous Chapter (" + (currentChapterNumber - 1) + ")");
+	/**
+	 * Sacred Editorial modal dialog displaying a 5-column chapter grid (1..totalChaptersInBook)
+	 * so readers can jump directly to any chapter in the current book.
+	 */
+	private void showChapterJumpDialog() {
+		int bookId = parseBookId();
+		int chapters = AssetUtil.getBookChapterCount(this, bookId);
+		if (chapters > 0) {
+			totalChaptersInBook = chapters;
+			updateChapterNavUi();
 		}
-		popup.getMenu().add(0, 5, 1, "→  Next Chapter (" + (currentChapterNumber + 1) + ")");
-		popup.getMenu().add(0, 1, 2, "★  Bookmarks");
-		popup.getMenu().add(0, 2, 3, "⇄  Translations & View Mode");
-		popup.getMenu().add(0, 3, 4, "Aa  Typography & Theme");
-		popup.setOnMenuItemClickListener(item -> {
-			switch (item.getItemId()) {
-				case 1:
-					openAllBookmarks();
-					return true;
-				case 2:
-					showVersionPickerDialog();
-					return true;
-				case 3:
-					showTypographyPopover();
-					return true;
-				case 4:
-					if (currentChapterNumber > 1) loadChapter(currentChapterNumber - 1);
-					return true;
-				case 5:
-					loadChapter(currentChapterNumber + 1);
-					return true;
-				default:
-					return false;
+
+		final Typeface serifFace = ResourcesCompat.getFont(this, R.font.crimson_pro);
+		final Typeface monoFace = ResourcesCompat.getFont(this, R.font.jetbrains_mono);
+		final int goldColor = ContextCompat.getColor(this, R.color.colorAntiqueGold);
+		final int primaryColor = ContextCompat.getColor(this, R.color.colorTextPrimary);
+		final int secondaryColor = ContextCompat.getColor(this, R.color.colorTextSecondary);
+
+		LinearLayout rootCard = new LinearLayout(this);
+		rootCard.setOrientation(LinearLayout.VERTICAL);
+		rootCard.setBackgroundResource(R.drawable.bg_dialog_rounded);
+		rootCard.setPadding(dp(20), dp(22), dp(20), dp(14));
+
+		TextView tvKicker = new TextView(this);
+		tvKicker.setText("JUMP TO CHAPTER");
+		tvKicker.setTextSize(10.5f);
+		tvKicker.setLetterSpacing(0.12f);
+		if (monoFace != null) tvKicker.setTypeface(monoFace, Typeface.BOLD);
+		tvKicker.setTextColor(goldColor);
+		rootCard.addView(tvKicker);
+
+		TextView tvTitle = new TextView(this);
+		tvTitle.setText(currentBookName + (currentNameEfi != null && !currentNameEfi.isEmpty() ? " • " + currentNameEfi : ""));
+		tvTitle.setTextSize(19f);
+		if (serifFace != null) tvTitle.setTypeface(serifFace, Typeface.BOLD);
+		tvTitle.setTextColor(primaryColor);
+		LinearLayout.LayoutParams titleLp = new LinearLayout.LayoutParams(
+				ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+		titleLp.topMargin = dp(4);
+		titleLp.bottomMargin = dp(14);
+		tvTitle.setLayoutParams(titleLp);
+		rootCard.addView(tvTitle);
+
+		AlertDialog dialog = new AlertDialog.Builder(this)
+				.setView(rootCard)
+				.setCancelable(true)
+				.create();
+
+		if (dialog.getWindow() != null) {
+			dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+		}
+
+		ScrollView scrollView = new ScrollView(this);
+		int maxGridHeight = Math.min(dp(360), (int) (getResources().getDisplayMetrics().heightPixels * 0.55f));
+		LinearLayout.LayoutParams scrollLp = new LinearLayout.LayoutParams(
+				ViewGroup.LayoutParams.MATCH_PARENT,
+				totalChaptersInBook > 30 ? maxGridHeight : ViewGroup.LayoutParams.WRAP_CONTENT);
+		scrollView.setLayoutParams(scrollLp);
+
+		LinearLayout gridContainer = new LinearLayout(this);
+		gridContainer.setOrientation(LinearLayout.VERTICAL);
+
+		final int columns = 5;
+		LinearLayout currentRow = null;
+		for (int ch = 1; ch <= totalChaptersInBook; ch++) {
+			if ((ch - 1) % columns == 0) {
+				currentRow = new LinearLayout(this);
+				currentRow.setOrientation(LinearLayout.HORIZONTAL);
+				LinearLayout.LayoutParams rowLp = new LinearLayout.LayoutParams(
+						ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+				rowLp.bottomMargin = dp(8);
+				currentRow.setLayoutParams(rowLp);
+				gridContainer.addView(currentRow);
 			}
-		});
-		popup.show();
+
+			final int targetCh = ch;
+			boolean isCurrent = (ch == currentChapterNumber);
+			TextView cell = new TextView(this);
+			cell.setText(String.valueOf(ch));
+			cell.setGravity(Gravity.CENTER);
+			cell.setTextSize(14f);
+			if (monoFace != null) cell.setTypeface(monoFace, Typeface.BOLD);
+			cell.setTextColor(isCurrent ? goldColor : primaryColor);
+			cell.setBackgroundResource(isCurrent ? R.drawable.bg_badge_gold : R.drawable.bg_chapter_cell);
+			cell.setMinHeight(dp(44));
+			LinearLayout.LayoutParams cellLp = new LinearLayout.LayoutParams(0, dp(44), 1f);
+			if (ch % columns != 0) {
+				cellLp.setMarginEnd(dp(8));
+			}
+			cell.setLayoutParams(cellLp);
+			cell.setOnClickListener(v -> {
+				dialog.dismiss();
+				if (targetCh != currentChapterNumber) {
+					loadChapter(targetCh);
+				}
+			});
+			if (currentRow != null) {
+				currentRow.addView(cell);
+			}
+		}
+
+		int remainder = totalChaptersInBook % columns;
+		if (remainder != 0 && currentRow != null) {
+			int fillers = columns - remainder;
+			for (int i = 0; i < fillers; i++) {
+				View spacer = new View(this);
+				LinearLayout.LayoutParams spacerLp = new LinearLayout.LayoutParams(0, dp(44), 1f);
+				if (i < fillers - 1) {
+					spacerLp.setMarginEnd(dp(8));
+				}
+				spacer.setLayoutParams(spacerLp);
+				currentRow.addView(spacer);
+			}
+		}
+
+		scrollView.addView(gridContainer);
+		rootCard.addView(scrollView);
+
+		TextView btnClose = new TextView(this);
+		btnClose.setText("CLOSE");
+		btnClose.setGravity(Gravity.CENTER);
+		btnClose.setTextSize(11.5f);
+		if (monoFace != null) btnClose.setTypeface(monoFace, Typeface.BOLD);
+		btnClose.setTextColor(secondaryColor);
+		btnClose.setPadding(dp(16), dp(10), dp(16), dp(6));
+		btnClose.setOnClickListener(v -> dialog.dismiss());
+		LinearLayout.LayoutParams closeLp = new LinearLayout.LayoutParams(
+				ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+		closeLp.gravity = Gravity.END;
+		closeLp.topMargin = dp(4);
+		btnClose.setLayoutParams(closeLp);
+		rootCard.addView(btnClose);
+
+		dialog.show();
 	}
 
 	private void showVersionPickerDialog() {
@@ -384,6 +545,9 @@ public class BibleReaderActivity extends AppCompatActivity {
 				BibleVersion paneOne = BibleVersion.getById(parallelPrimaryId);
 				BibleVersion paneTwo = BibleVersion.getById(parallelSecondaryId);
 
+				pickerBinding.containerVersions.removeAllViews();
+				pickerBinding.containerVersionsSecondary.removeAllViews();
+
 				if (!isParallelMode) {
 					pickerBinding.tabModeSingle.setBackgroundResource(R.drawable.bg_circle_accent);
 					pickerBinding.tabModeSingle.setTextColor(goldColor);
@@ -392,20 +556,8 @@ public class BibleReaderActivity extends AppCompatActivity {
 					pickerBinding.tvVersionSectionLabel.setText("SELECT TRANSLATION");
 					pickerBinding.tvSecondarySectionLabel.setVisibility(View.GONE);
 					pickerBinding.containerVersionsSecondary.setVisibility(View.GONE);
-				} else {
-					pickerBinding.tabModeParallel.setBackgroundResource(R.drawable.bg_circle_accent);
-					pickerBinding.tabModeParallel.setTextColor(goldColor);
-					pickerBinding.tvLayoutSummaryTitle.setText(paneOne.name + " (" + paneOne.abbrev + ")  ⇄  " + paneTwo.name + " (" + paneTwo.abbrev + ")");
-					pickerBinding.tvLayoutSummaryDesc.setText("Pane 1 on top • Pane 2 indented below. Pair any two translations.");
-					pickerBinding.tvVersionSectionLabel.setText("PANE 1 • PRIMARY TRANSLATION");
-					pickerBinding.tvSecondarySectionLabel.setVisibility(View.VISIBLE);
-					pickerBinding.containerVersionsSecondary.setVisibility(View.VISIBLE);
-				}
 
-				pickerBinding.containerVersions.removeAllViews();
-				pickerBinding.containerVersionsSecondary.removeAllViews();
-				for (final BibleVersion v : allVersions) {
-					if (!isParallelMode) {
+					for (final BibleVersion v : allVersions) {
 						boolean selected = v.id.equalsIgnoreCase(activeVersionId);
 						pickerBinding.containerVersions.addView(buildVersionCard(v, selected,
 								v.language + " Scripture", serifFace, monoFace, goldColor, secondaryColor, primaryColor,
@@ -414,31 +566,61 @@ public class BibleReaderActivity extends AppCompatActivity {
 									saveReadingPreferences();
 									run();
 								}));
-					} else {
-						boolean selectedOne = v.id.equalsIgnoreCase(parallelPrimaryId);
-						String subOne = v.id.equalsIgnoreCase(parallelSecondaryId)
-								? "Currently in Pane 2 • tap to swap"
-								: v.language + " Scripture";
-						pickerBinding.containerVersions.addView(buildVersionCard(v, selectedOne,
-								subOne, serifFace, monoFace, goldColor, secondaryColor, primaryColor,
-								view -> {
-									setParallelPane(true, v.id);
-									saveReadingPreferences();
-									run();
-								}));
-
-						boolean selectedTwo = v.id.equalsIgnoreCase(parallelSecondaryId);
-						String subTwo = v.id.equalsIgnoreCase(parallelPrimaryId)
-								? "Currently in Pane 1 • tap to swap"
-								: v.language + " Scripture";
-						pickerBinding.containerVersionsSecondary.addView(buildVersionCard(v, selectedTwo,
-								subTwo, serifFace, monoFace, goldColor, secondaryColor, primaryColor,
-								view -> {
-									setParallelPane(false, v.id);
-									saveReadingPreferences();
-									run();
-								}));
 					}
+				} else {
+					pickerBinding.tabModeParallel.setBackgroundResource(R.drawable.bg_circle_accent);
+					pickerBinding.tabModeParallel.setTextColor(goldColor);
+					pickerBinding.tvLayoutSummaryTitle.setText(paneOne.name + " (" + paneOne.abbrev + ")  ⇄  " + paneTwo.name + " (" + paneTwo.abbrev + ")");
+					pickerBinding.tvLayoutSummaryDesc.setText("1st translation on top • 2nd indented below. Tap either dropdown to switch.");
+					pickerBinding.tvVersionSectionLabel.setText("1ST TRANSLATION (TOP)");
+					pickerBinding.tvSecondarySectionLabel.setText("2ND TRANSLATION (BELOW)");
+					pickerBinding.tvSecondarySectionLabel.setVisibility(View.VISIBLE);
+					pickerBinding.containerVersionsSecondary.setVisibility(View.VISIBLE);
+
+					// 1st Translation Compact Dropdown Selector Card
+					View firstDropdown = buildDropdownSelectorCard(
+							paneOne,
+							paneOne.language + " Scripture • Tap to change 1st translation",
+							serifFace, monoFace, goldColor, secondaryColor, primaryColor,
+							anchor -> showTranslationDropdownPopup(anchor, true, allVersions, this));
+					pickerBinding.containerVersions.addView(firstDropdown);
+
+					// Centered Quick-Swap Pill Button between 1st and 2nd Selectors
+					LinearLayout swapRow = new LinearLayout(BibleReaderActivity.this);
+					swapRow.setOrientation(LinearLayout.HORIZONTAL);
+					swapRow.setGravity(Gravity.CENTER);
+					LinearLayout.LayoutParams swapRowLp = new LinearLayout.LayoutParams(
+							ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+					swapRowLp.topMargin = dp(4);
+					swapRow.setLayoutParams(swapRowLp);
+
+					TextView btnSwap = new TextView(BibleReaderActivity.this);
+					btnSwap.setText("⇅  SWAP 1ST & 2ND");
+					btnSwap.setTextSize(10.5f);
+					if (monoFace != null) btnSwap.setTypeface(monoFace, Typeface.BOLD);
+					btnSwap.setTextColor(goldColor);
+					btnSwap.setLetterSpacing(0.08f);
+					btnSwap.setBackgroundResource(R.drawable.bg_version_pill);
+					btnSwap.setPadding(dp(14), dp(6), dp(14), dp(6));
+					btnSwap.setClickable(true);
+					btnSwap.setFocusable(true);
+					btnSwap.setOnClickListener(v -> {
+						String tmp = parallelPrimaryId;
+						parallelPrimaryId = parallelSecondaryId;
+						parallelSecondaryId = tmp;
+						saveReadingPreferences();
+						run();
+					});
+					swapRow.addView(btnSwap);
+					pickerBinding.containerVersions.addView(swapRow);
+
+					// 2nd Translation Compact Dropdown Selector Card
+					View secondDropdown = buildDropdownSelectorCard(
+							paneTwo,
+							paneTwo.language + " Scripture • Tap to change 2nd translation",
+							serifFace, monoFace, goldColor, secondaryColor, primaryColor,
+							anchor -> showTranslationDropdownPopup(anchor, false, allVersions, this));
+					pickerBinding.containerVersionsSecondary.addView(secondDropdown);
 				}
 			}
 		};
@@ -462,6 +644,101 @@ public class BibleReaderActivity extends AppCompatActivity {
 
 		refreshDialogUi.run();
 		dialog.show();
+	}
+
+	private void showTranslationDropdownPopup(View anchor, boolean isPaneOne,
+	                                          List<BibleVersion> allVersions, Runnable onSelected) {
+		PopupMenu popup = new PopupMenu(this, anchor);
+		String currentId = isPaneOne ? parallelPrimaryId : parallelSecondaryId;
+		String otherId = isPaneOne ? parallelSecondaryId : parallelPrimaryId;
+
+		for (int i = 0; i < allVersions.size(); i++) {
+			BibleVersion v = allVersions.get(i);
+			String label = v.name + " (" + v.abbrev + ")";
+			if (v.id.equalsIgnoreCase(currentId)) {
+				label = "✓  " + label;
+			} else if (v.id.equalsIgnoreCase(otherId)) {
+				label = label + "  ⇄ Swap";
+			}
+			popup.getMenu().add(0, i, i, label);
+		}
+
+		popup.setOnMenuItemClickListener(item -> {
+			int idx = item.getItemId();
+			if (idx >= 0 && idx < allVersions.size()) {
+				BibleVersion chosen = allVersions.get(idx);
+				setParallelPane(isPaneOne, chosen.id);
+				saveReadingPreferences();
+				if (onSelected != null) {
+					onSelected.run();
+				}
+				return true;
+			}
+			return false;
+		});
+		popup.show();
+	}
+
+	private View buildDropdownSelectorCard(BibleVersion v, String subtitle,
+	                                       Typeface serifFace, Typeface monoFace,
+	                                       int goldColor, int secondaryColor, int primaryColor,
+	                                       View.OnClickListener onClick) {
+		LinearLayout card = new LinearLayout(this);
+		card.setOrientation(LinearLayout.HORIZONTAL);
+		card.setGravity(Gravity.CENTER_VERTICAL);
+		card.setBackgroundResource(R.drawable.bg_card_selected_subtle);
+		card.setPadding(dp(14), dp(12), dp(14), dp(12));
+		LinearLayout.LayoutParams cardLp = new LinearLayout.LayoutParams(
+				ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+		cardLp.bottomMargin = dp(4);
+		card.setLayoutParams(cardLp);
+		card.setClickable(true);
+		card.setFocusable(true);
+
+		TextView badge = new TextView(this);
+		badge.setText(v.abbrev);
+		badge.setTextSize(11.5f);
+		if (monoFace != null) badge.setTypeface(monoFace, Typeface.BOLD);
+		badge.setTextColor(goldColor);
+		badge.setBackgroundResource(R.drawable.bg_badge_gold);
+		badge.setGravity(Gravity.CENTER);
+		badge.setPadding(dp(10), dp(4), dp(10), dp(4));
+		LinearLayout.LayoutParams badgeLp = new LinearLayout.LayoutParams(dp(52), ViewGroup.LayoutParams.WRAP_CONTENT);
+		badgeLp.setMarginEnd(dp(12));
+		badge.setLayoutParams(badgeLp);
+		card.addView(badge);
+
+		LinearLayout textCol = new LinearLayout(this);
+		textCol.setOrientation(LinearLayout.VERTICAL);
+		textCol.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+
+		TextView tvName = new TextView(this);
+		tvName.setText(v.name);
+		tvName.setTextSize(15.5f);
+		if (serifFace != null) tvName.setTypeface(serifFace, Typeface.BOLD);
+		tvName.setTextColor(primaryColor);
+		textCol.addView(tvName);
+
+		TextView tvSub = new TextView(this);
+		tvSub.setText(subtitle);
+		tvSub.setTextSize(12f);
+		if (serifFace != null) tvSub.setTypeface(serifFace);
+		tvSub.setTextColor(secondaryColor);
+		textCol.addView(tvSub);
+
+		card.addView(textCol);
+
+		TextView chevron = new TextView(this);
+		chevron.setText("SELECT ▾");
+		chevron.setTextSize(10.5f);
+		if (monoFace != null) chevron.setTypeface(monoFace, Typeface.BOLD);
+		chevron.setTextColor(goldColor);
+		chevron.setBackgroundResource(R.drawable.bg_version_pill);
+		chevron.setPadding(dp(10), dp(5), dp(10), dp(5));
+		card.addView(chevron);
+
+		card.setOnClickListener(onClick);
+		return card;
 	}
 
 	private View buildVersionCard(BibleVersion v, boolean isSelected, String subtitle,
@@ -545,6 +822,7 @@ public class BibleReaderActivity extends AppCompatActivity {
 						reloadBookmarkedVerses();
 						binding.headerTitle.setText(currentBookName + " " + currentChapterNumber);
 						updateHeaderSubtitle();
+						updateChapterNavUi();
 						setTitle(currentBookName + " " + currentChapterNumber);
 						updateBookmarkIcon();
 
@@ -729,7 +1007,7 @@ public class BibleReaderActivity extends AppCompatActivity {
 		}
 
 		final boolean isBookmarked = bookmarkedVersesInChapter.contains(verseNum);
-		String bookmarkAction = isBookmarked ? "Remove Bookmark" : "Bookmark Verse";
+		String bookmarkAction = isBookmarked ? "Remove Bookmark & Highlight" : "Bookmark & Highlight Verse";
 
 		AlertDialog.Builder builder = new AlertDialog.Builder(BibleReaderActivity.this);
 		builder.setTitle(citation);
@@ -781,7 +1059,7 @@ public class BibleReaderActivity extends AppCompatActivity {
 		if (listAdapter != null) {
 			listAdapter.notifyDataSetChanged();
 		}
-		Toast.makeText(this, nowSaved ? "Verse Bookmarked" : "Removed from Saved", Toast.LENGTH_SHORT).show();
+		Toast.makeText(this, nowSaved ? "Verse Bookmarked & Highlighted" : "Removed Bookmark & Highlight", Toast.LENGTH_SHORT).show();
 	}
 
 	public class Listview1Adapter extends BaseAdapter {
@@ -820,8 +1098,28 @@ public class BibleReaderActivity extends AppCompatActivity {
 
 			HashMap<String, Object> verseMap = _data.get(position);
 			String vNum = verseMap.get("verse_num") != null ? verseMap.get("verse_num").toString() : "";
+			boolean isBookmarked = bookmarkedVersesInChapter.contains(vNum);
 			rowBinding.tvVerseNum.setText(vNum);
-			rowBinding.ivVerseBookmark.setVisibility(bookmarkedVersesInChapter.contains(vNum) ? View.VISIBLE : View.GONE);
+			rowBinding.ivVerseBookmark.setVisibility(isBookmarked ? View.VISIBLE : View.GONE);
+
+			int pStart = rowBinding.verseRowRoot.getPaddingStart();
+			int pTop = rowBinding.verseRowRoot.getPaddingTop();
+			int pEnd = rowBinding.verseRowRoot.getPaddingEnd();
+			int pBottom = rowBinding.verseRowRoot.getPaddingBottom();
+			if (isBookmarked) {
+				rowBinding.verseRowRoot.setBackgroundResource(R.drawable.bg_verse_highlighted);
+				rowBinding.tvVerseHighlightBadge.setVisibility(View.VISIBLE);
+				rowBinding.tvVerseNum.setBackgroundResource(R.drawable.bg_badge_gold);
+			} else {
+				if (selectableItemBackgroundResId != 0) {
+					rowBinding.verseRowRoot.setBackgroundResource(selectableItemBackgroundResId);
+				} else {
+					rowBinding.verseRowRoot.setBackground(null);
+				}
+				rowBinding.tvVerseHighlightBadge.setVisibility(View.GONE);
+				rowBinding.tvVerseNum.setBackgroundResource(R.drawable.bg_verse_pill);
+			}
+			rowBinding.verseRowRoot.setPaddingRelative(pStart, pTop, pEnd, pBottom);
 
 			if (isParallelMode) {
 				rowBinding.tvPrimary.setText(getVerseText(verseMap, parallelPrimaryId));
