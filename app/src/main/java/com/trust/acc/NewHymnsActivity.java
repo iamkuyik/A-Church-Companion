@@ -1,5 +1,6 @@
 package com.trust.acc;
 
+import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -9,6 +10,7 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
 import android.widget.Toast;
@@ -135,6 +137,17 @@ public class NewHymnsActivity extends AppCompatActivity {
 
 		binding.btnMenu.setOnClickListener(this::showOptionsMenu);
 
+		View.OnClickListener clearSearchListener = v -> {
+			binding.etSearch.setText("");
+			binding.etSearch.clearFocus();
+			InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+			if (imm != null) {
+				imm.hideSoftInputFromWindow(binding.etSearch.getWindowToken(), 0);
+			}
+		};
+		binding.btnClearSearch.setOnClickListener(clearSearchListener);
+		binding.btnClearEmpty.setOnClickListener(clearSearchListener);
+
 		binding.etSearch.addTextChangedListener(new TextWatcher() {
 			@Override
 			public void onTextChanged(CharSequence s, int start, int before, int count) {
@@ -142,6 +155,7 @@ public class NewHymnsActivity extends AppCompatActivity {
 					searchHandler.removeCallbacks(pendingSearch);
 				}
 				final String q = s != null ? s.toString() : "";
+				binding.btnClearSearch.setVisibility(q.trim().isEmpty() ? View.GONE : View.VISIBLE);
 				pendingSearch = () -> filterHymns(q);
 				searchHandler.postDelayed(pendingSearch, 110);
 			}
@@ -188,6 +202,11 @@ public class NewHymnsActivity extends AppCompatActivity {
 		if (listAdapter != null) {
 			listAdapter.notifyDataSetChanged();
 		}
+		boolean hasQuery = query != null && !query.trim().isEmpty();
+		binding.btnClearSearch.setVisibility(hasQuery ? View.VISIBLE : View.GONE);
+		boolean isEmpty = hymnListMap.isEmpty() && !masterListMap.isEmpty();
+		binding.layoutEmpty.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
+		binding.listview1.setVisibility(isEmpty ? View.GONE : View.VISIBLE);
 	}
 
 	private void showAddOrImportDialog() {

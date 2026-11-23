@@ -1,6 +1,9 @@
 package com.trust.acc;
 
 import android.app.Activity;
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
@@ -87,6 +90,8 @@ public class NewLyricsActivity extends AppCompatActivity {
 
 		binding.btnAa.setOnClickListener(v -> showTypographyPopover());
 
+		binding.btnShare.setOnClickListener(v -> showShareOptionsDialog());
+
 		binding.btnToggle.setOnClickListener(_view -> {
 			if (!pdfAvailableLocally) {
 				showScorePackPrompt();
@@ -130,6 +135,32 @@ public class NewLyricsActivity extends AppCompatActivity {
 				return false;
 			}
 		});
+	}
+
+	private void showShareOptionsDialog() {
+		String title = hymnTitle != null ? hymnTitle.trim() : "";
+		String lyrics = hymnLyrics != null ? hymnLyrics.trim() : "";
+		if (title.isEmpty() && lyrics.isEmpty()) return;
+		final String formatted = title + "\n\n" + lyrics;
+		String[] options = new String[]{"Share Hymn", "Copy Lyrics"};
+		new AlertDialog.Builder(this)
+				.setTitle(title.isEmpty() ? "Hymn" : title)
+				.setItems(options, (dialog, which) -> {
+					if (which == 0) {
+						Intent shareIntent = new Intent(Intent.ACTION_SEND);
+						shareIntent.setType("text/plain");
+						shareIntent.putExtra(Intent.EXTRA_SUBJECT, title);
+						shareIntent.putExtra(Intent.EXTRA_TEXT, formatted);
+						startActivity(Intent.createChooser(shareIntent, "Share Hymn"));
+					} else {
+						ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+						if (cm != null) {
+							cm.setPrimaryClip(ClipData.newPlainText("Hymn Lyrics", formatted));
+							Toast.makeText(getApplicationContext(), "Lyrics copied to clipboard", Toast.LENGTH_SHORT).show();
+						}
+					}
+				})
+				.show();
 	}
 
 	private void showScorePackPrompt() {

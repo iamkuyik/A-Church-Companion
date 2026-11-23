@@ -20,7 +20,7 @@ This file is the source of truth for user-facing behaviors in A Church Companion
 - **`BibleBooksActivity`**:
   - Sticky Old Testament (`tabOt`, `id < 470`) and New Testament (`tabNt`, `id >= 470`) pill tabs with saved instance state (`STATE_TESTAMENT`) and preserved per-testament scroll positions.
   - Horizontal swipe (`GestureDetector` + `dispatchTouchEvent` with `ACTION_CANCEL`) to switch between Old Testament (swipe left → NT) and New Testament (swipe right → OT) when search is empty (ignores touches starting inside `etSearch`).
-  - Live search (`etSearch`) across **both** Old and New Testaments (English + Efik with diacritic and `ng`/`n` normalization).
+  - Live search (`etSearch`) across **both** Old and New Testaments (English + Efik with diacritic and `ng`/`n` normalization), with 1-tap Clear Search (`✕`) and empty-search state (`layoutEmpty` + `btnClearEmpty`).
   - Fast scroll enabled on book list; tapping a book opens `BibleChaptersActivity`.
 - **`BibleChaptersActivity`**:
   - Full-width chapter grid for the selected book; tapping a chapter opens `BibleReaderActivity`.
@@ -36,17 +36,17 @@ This file is the source of truth for user-facing behaviors in A Church Companion
 
 ### Hymnals & Sheet Music
 - **`EfikHymnsActivity` & `SocHymnsActivity`**:
-  - Async hymn loading via `HymnRepository` + debounced 4-tier ranked search (`HymnRepository.searchHymnsRanked`: exact number → number prefix → title → lyrics) with Efik diacritic & `ng`/`n` normalization (`EfikHymnsActivity.normalizeEfik`).
+  - Async hymn loading via `HymnRepository` + debounced 4-tier ranked search (`HymnRepository.searchHymnsRanked`: exact number → number prefix → title → lyrics) with Efik diacritic & `ng`/`n` normalization (`EfikHymnsActivity.normalizeEfik`), Clear Search (`✕`), and empty-search state.
   - `123` / `ABC` numeric keypad mode toggle (`btnKeypadMode`) and fast scroll.
 - **`NewHymnsActivity`**:
-  - Async hymn loading, alphabetical sorting, and ranked search.
+  - Async hymn loading, alphabetical sorting, ranked search with Clear Search (`✕`), and empty-search state.
   - Create custom hymn modal (`btnImport` / `+`) and export/import of `.acc`, `.hymn`, and `.json` packs (including split text/Bible + PDF score packs with deduplication and preview dialog).
   - Deep-link `ACTION_VIEW` intent filters in `AndroidManifest.xml` for `.acc`, `.hymn`, and `.json` files (rejects `.apk` safely).
 - **`LyricsActivity`**:
   - Horizontal swipe (`GestureDetector` + `dispatchTouchEvent`) for Previous / Next Hymn.
-  - Typography popover (`btnAa`), hymn bookmark toggle (`btnBookmark`) with long-press to open `SavedActivity`.
+  - Share / Copy Hymn button (`btnShare`), typography popover (`btnAa`), hymn bookmark toggle (`btnBookmark`) with long-press to open `SavedActivity`.
 - **`NewLyricsActivity` + `PdfRendererHelper` + `PdfPageAdapter` + `ZoomableRecyclerView`**:
-  - Lyrics view with horizontal swipe for Previous / Next Hymn (disabled while viewing PDF score so pan/zoom works cleanly).
+  - Lyrics view with horizontal swipe for Previous / Next Hymn (disabled while viewing PDF score so pan/zoom works cleanly) and Share / Copy Hymn button (`btnShare`).
   - Toggle between Lyrics and zoomable PDF Musical Score (`ZoomableRecyclerView` with pinch-to-zoom and double-tap zoom).
   - `PdfRendererHelper` renders strictly with `Bitmap.Config.ARGB_8888` on warm parchment background (capped at 1800px wide with OOM fallback).
   - `PdfPageAdapter` clears recycled images with `setImageDrawable(null)` and keeps a non-zero loading placeholder height.
@@ -63,7 +63,7 @@ This file is the source of truth for user-facing behaviors in A Church Companion
 These features were shipped in the `v1.3.2` APK release (`24b1705`) on an unmerged branch and were not on `main` when `v1.4.0` branched from `v1.3.1` (`5eab027`). Restore them one small, focused PR at a time, moving each item into **Shipped on `main`** (with tests + `tools/verify_features.py` checks) once merged:
 
 - [x] **OT / NT horizontal swipe** in `BibleBooksActivity` (swipe left/right between Old Testament and New Testament when search is empty).
-- [ ] **Bible Books clear-search (`×`) button & empty search state** in `BibleBooksActivity` / `bible_books.xml`.
+- [x] **Clear-search (`✕`) button & empty search state** across `BibleBooks`, `EfikHymns`, `SocHymns`, and `NewHymns` (+ **Share / Copy Hymn** button in `LyricsActivity` & `NewLyricsActivity`).
 - [ ] **In-app `# 123` Hymn Quick-Dial modal** *(skipped intentionally — existing `123`/`ABC` keyboard toggle covers numeric lookup)*.
 - [x] **Keep-Screen-On (`FLAG_KEEP_SCREEN_ON`)** in `BibleReaderActivity`, `LyricsActivity`, and `NewLyricsActivity`.
 - [ ] **Bottom `‹ PREV` / `NEXT ›` navigation bars & 5-column Chapter Jump modal** in `BibleReaderActivity` (and bottom prev/next hymn indicator in `LyricsActivity` / `NewLyricsActivity`).
