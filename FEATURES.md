@@ -25,12 +25,12 @@ This file is the source of truth for user-facing behaviors in A Church Companion
 - **`BibleChaptersActivity`**:
   - Full-width chapter grid for the selected book; tapping a chapter opens `BibleReaderActivity`.
 - **`BibleReaderActivity`**:
-  - Offline SQLite Bible reader (`AssetUtil` + `BibleVersion`) supporting dynamic detection of installed translations (`efi`, `kjv`, `rsv`, `bbe`, `niv`).
+  - Offline SQLite Bible reader (`AssetUtil` + `BibleVersion`) supporting dynamic detection of installed translations (`efi`, `kjv`, `rsv`, `bbe`, `niv`) with live read-time text sanitization (`AssetUtil.cleanVerseText` stripping `[N]`/`[]` footnotes, BBE `\ch:v\` tags, and RSV backticks).
   - Single-translation view and flexible **Parallel View** (any two translations paired independently) via translation switcher dialog (`btnVersionSelector`).
   - Horizontal swipe (`GestureDetector` + `dispatchTouchEvent` with `ACTION_CANCEL`) for Previous / Next Chapter.
   - Chapter bookmark toggle on tap (`btnBookmark`); **long-press** on bookmark star opens `SavedActivity` ("View All Bookmarks").
   - Reader `☰` menu (`btnReaderMenu`): Previous/Next Chapter, Bookmarks, Translations & View Mode, Typography & Theme.
-  - Typography & Theme popover (`btnAa` via `TypographyHelper`).
+  - Typography & Theme popover (`btnAa` via `TypographyHelper`), calibrated `crimson_pro_regular.ttf` metrics, and `includeFontPadding="false"` across scripture and hymn text views.
   - Verse actions on **long-press** (`setOnItemLongClickListener`): Compare Translations dialog, Bookmark/Remove Verse, Copy Verse, Share Verse.
   - Preserves chapter across configuration changes (`STATE_CHAPTER`) and scrolls to `target_verse` when opened from a verse bookmark.
 
@@ -69,4 +69,4 @@ These features were shipped in the `v1.3.2` APK release (`24b1705`) on an unmerg
 - [ ] **Bottom `‹ PREV` / `NEXT ›` navigation bars & 5-column Chapter Jump modal** in `BibleReaderActivity` (and bottom prev/next hymn indicator in `LyricsActivity` / `NewLyricsActivity`).
 - [ ] **Parallel View dropdown selectors (`SELECT ▾`) & one-tap `⇅ SWAP 1ST & 2ND` button** in the Bible translation picker dialog.
 - [ ] **Unified high-contrast verse bookmark + highlight styling** (`bg_verse_highlighted.xml` + inline `★ BOOKMARKED` badge).
-- [ ] **Crimson Pro `head.yMax` font metrics fix (`includeFontPadding="false"`) & Bible/Hymn corpus cleanup** (verify against v1.4.1 SQLite DB & JSON assets before porting).
+- [x] **Crimson Pro `head.yMax` font metrics fix (`includeFontPadding="false"`) & Bible/Hymn text cleanup** (`AssetUtil.cleanVerseText` + 12 SoC OCR lyric fixes).

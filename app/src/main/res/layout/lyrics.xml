@@ -135,6 +135,7 @@
 				android:layout_width="match_parent"
 				android:layout_height="wrap_content"
 				android:gravity="center_horizontal"
+				android:includeFontPadding="false"
 				android:fontFamily="@font/crimson_pro"
 				android:text="Lyrics text..."
 				android:textColor="@color/colorTextPrimary"
