@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.5.0] - 2026-11-23
+
+### Added
+- **Old / New Testament Horizontal Swipe:** Swipe left/right between Old Testament and New Testament in `BibleBooksActivity` (density-scaled, disabled during search, preserves per-testament scroll positions).
+- **Bible Reader Bottom Navigation & Chapter Jump:** Added a 52dp bottom chapter navigation bar (`‹ PREV CH.` / `CHAPTER X OF Y ▾` / `NEXT CH. ›`), 5-column Chapter Jump modal (also opened by tapping the header book/chapter title), and exact book chapter count bounds—allowing removal of the redundant top-right `☰` menu button.
+- **Unified High-Contrast Verse Highlight:** Bookmarked verses now render with a warm amber/gold highlight card, 5dp left accent spine, rounded verse number pill, and `★ BOOKMARKED` badge.
+- **Compact Parallel View Selector:** Upgraded Parallel View in the translation picker dialog to compact 1st & 2nd translation dropdown selectors (`SELECT ▾`) with a one-tap `⇅ SWAP 1ST & 2ND` button.
+- **Clear Search, Empty States & Share Hymn:** Added 1-tap `✕` Clear Search buttons and friendly empty-search states across all 4 list screens, plus a header Share / Copy Hymn button in `LyricsActivity` and `NewLyricsActivity`.
+- **Worship Ergonomics & Startup Speed:** Added `FLAG_KEEP_SCREEN_ON` across all 3 readers and asynchronous background preloading of hymnals and Bible index in `MainActivity`.
+- **Regression Safeguards & CI Release Gates:** Added `AGENTS.md`, `FEATURES.md`, PR checklist, `tools/verify_features.py`, JVM JUnit 4 unit tests, and automated CI checks verifying release tags are merged into `main` and match `versionName`.
+
+### Fixed
+- **Typography & Text Cleanup:** Calibrated `crimson_pro_regular.ttf` `head.yMax` metrics with `includeFontPadding="false"` and added live read-time scripture footnote/marker sanitization (`AssetUtil.cleanVerseText`).
+
+## [1.4.1] - 2026-11-19
+
+### Fixed
+- **PDF Score Rendering & Split Packs:** Restored `Bitmap.Config.ARGB_8888` required by `PdfRenderer.Page.render()`, added a 220dp loading placeholder in `PdfPageAdapter`, and enabled independent split `.acc` text/Bible and sheet-music packs.
+
 ## [1.4.0] - 2026-11-19
 
 ### Added
