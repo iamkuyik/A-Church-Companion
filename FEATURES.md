@@ -5,7 +5,7 @@ This file is the source of truth for user-facing behaviors in A Church Companion
 
 ---
 
-## Shipped on `main` (v1.4.1)
+## Shipped on `main` (v1.5.0)
 
 ### App Shell & System Chrome
 - **`AccApplication`**: Applies saved light/dark/system theme (`theme_prefs`) on every cold start (including deep-link file opens) and provides shared `ioExecutor()`.

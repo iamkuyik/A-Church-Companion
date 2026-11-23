@@ -16,8 +16,8 @@ android {
 		namespace "com.trust.acc"
 		minSdk 26
 		targetSdk 34
-		versionCode 9
-		versionName "1.4.1"
+		versionCode 10
+		versionName "1.5.0"
 		vectorDrawables.useSupportLibrary = true
 		buildConfigField "boolean", "ENABLE_SHEET_MUSIC", "true"
 		buildConfigField "String", "SCORES_PACK_URL", "\"https://github.com/iamkuyik/A-Church-Companion/releases/latest\""
