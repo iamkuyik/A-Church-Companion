@@ -24,6 +24,8 @@ public class MainActivity extends AppCompatActivity {
 		binding = MainBinding.inflate(getLayoutInflater());
 		setContentView(binding.getRoot());
 		SystemBarUtil.applyEdgeToEdge(this, binding.getRoot());
+		HymnRepository.getInstance(this).preloadAllAsync();
+		AssetUtil.preloadAsync(this);
 		initialize();
 	}
 

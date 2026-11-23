@@ -98,6 +98,8 @@ def check_required_patterns(errors: list[str], activities: list[str]) -> None:
                 ("btnTheme.setOnLongClickListener", "long-press theme reset to system default"),
                 ("SavedActivity.class", "Saved bookmarks navigation"),
                 ("BibleBooksActivity.class", "Holy Bible navigation"),
+                ("preloadAllAsync", "background hymnal cache preloading on startup"),
+                ("AssetUtil.preloadAsync", "background Bible index preloading on startup"),
             ],
         ),
         (
@@ -107,11 +109,15 @@ def check_required_patterns(errors: list[str], activities: list[str]) -> None:
                 ("tabNt.setOnClickListener", "New Testament tab handler"),
                 ("STATE_TESTAMENT", "saved testament instance state"),
                 ("etSearch.addTextChangedListener", "cross-testament live book search"),
+                ("GestureDetector", "horizontal OT/NT swipe detector"),
+                ("dispatchTouchEvent", "touch dispatch for OT/NT swipe"),
+                ("resolveSwipeTestament", "OT/NT swipe direction and search guard"),
             ],
         ),
         (
             JAVA_DIR / "BibleReaderActivity.java",
             [
+                ("FLAG_KEEP_SCREEN_ON", "keep screen awake while reading scripture"),
                 ("GestureDetector", "horizontal chapter swipe detector"),
                 ("dispatchTouchEvent", "touch dispatch for chapter swipe"),
                 ("setOnItemLongClickListener", "long-press verse options menu"),
@@ -148,6 +154,7 @@ def check_required_patterns(errors: list[str], activities: list[str]) -> None:
         (
             JAVA_DIR / "LyricsActivity.java",
             [
+                ("FLAG_KEEP_SCREEN_ON", "keep screen awake while singing hymns"),
                 ("GestureDetector", "horizontal hymn swipe detector"),
                 ("dispatchTouchEvent", "touch dispatch for hymn swipe"),
                 ("btnBookmark.setOnLongClickListener", "long-press bookmark star -> SavedActivity"),
@@ -157,6 +164,7 @@ def check_required_patterns(errors: list[str], activities: list[str]) -> None:
         (
             JAVA_DIR / "NewLyricsActivity.java",
             [
+                ("FLAG_KEEP_SCREEN_ON", "keep screen awake while singing or viewing sheet music"),
                 ("GestureDetector", "horizontal hymn swipe detector"),
                 ("dispatchTouchEvent", "touch dispatch for hymn swipe"),
                 ("pdfContainer.getVisibility() == View.VISIBLE", "disable swipe while viewing PDF score"),

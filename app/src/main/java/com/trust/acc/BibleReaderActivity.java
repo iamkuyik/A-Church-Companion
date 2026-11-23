@@ -15,6 +15,7 @@ import android.view.HapticFeedbackConstants;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.BaseAdapter;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
@@ -74,6 +75,7 @@ public class BibleReaderActivity extends AppCompatActivity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 		binding = BibleReaderBinding.inflate(getLayoutInflater());
 		setContentView(binding.getRoot());
 		SystemBarUtil.applyEdgeToEdge(this, binding.getRoot());

@@ -4,6 +4,8 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.view.GestureDetector;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
@@ -29,6 +31,11 @@ public class BibleBooksActivity extends AppCompatActivity {
 	private ArrayList<HashMap<String, Object>> search_backup = new ArrayList<>();
 	private String currentTestament = "ot";
 	private Listview1Adapter adapter;
+	private GestureDetector gestureDetector;
+	private int otScrollIndex = 0;
+	private int otScrollTop = 0;
+	private int ntScrollIndex = 0;
+	private int ntScrollTop = 0;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -58,17 +65,9 @@ public class BibleBooksActivity extends AppCompatActivity {
 	private void initialize() {
 		binding.btnBack.setOnClickListener(_v -> finish());
 
-		binding.tabOt.setOnClickListener(v -> {
-			currentTestament = "ot";
-			updateTabs();
-			filterBooks();
-		});
+		binding.tabOt.setOnClickListener(v -> switchTestament("ot"));
 
-		binding.tabNt.setOnClickListener(v -> {
-			currentTestament = "nt";
-			updateTabs();
-			filterBooks();
-		});
+		binding.tabNt.setOnClickListener(v -> switchTestament("nt"));
 
 		binding.etSearch.addTextChangedListener(new TextWatcher() {
 			@Override
@@ -95,6 +94,121 @@ public class BibleBooksActivity extends AppCompatActivity {
 			intent.putExtra("chapter_count", book.get("chapters") != null ? book.get("chapters").toString() : "1");
 			startActivity(intent);
 		});
+
+		// Density-scaled horizontal swipe detector for Old / New Testament switching
+		final float density = getResources().getDisplayMetrics().density;
+		final float horizontalThresholdPx = 56f * density;
+		final float verticalLockPx = 48f * density;
+		final float velocityThresholdPx = 150f * density;
+
+		gestureDetector = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
+			@Override
+			public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+				if (e1 == null || e2 == null) return false;
+				if (isTouchInsideView(binding.etSearch, e1)) return false;
+				String target = resolveSwipeTestament(
+						currentTestament,
+						hasActiveSearchQuery(),
+						e2.getX() - e1.getX(),
+						e2.getY() - e1.getY(),
+						velocityX,
+						horizontalThresholdPx,
+						verticalLockPx,
+						velocityThresholdPx
+				);
+				if (target != null) {
+					switchTestament(target);
+					return true;
+				}
+				return false;
+			}
+		});
+	}
+
+	@Override
+	public boolean dispatchTouchEvent(MotionEvent ev) {
+		if (gestureDetector != null && gestureDetector.onTouchEvent(ev)) {
+			// Cancel pressed/ripple state on underlying ListView when fling is consumed
+			MotionEvent cancel = MotionEvent.obtain(ev);
+			cancel.setAction(MotionEvent.ACTION_CANCEL);
+			super.dispatchTouchEvent(cancel);
+			cancel.recycle();
+			return true;
+		}
+		return super.dispatchTouchEvent(ev);
+	}
+
+	private boolean hasActiveSearchQuery() {
+		return binding.etSearch.getText() != null
+				&& !binding.etSearch.getText().toString().trim().isEmpty();
+	}
+
+	private boolean isTouchInsideView(View view, MotionEvent ev) {
+		if (view == null || view.getVisibility() != View.VISIBLE) return false;
+		int[] loc = new int[2];
+		view.getLocationOnScreen(loc);
+		float x = ev.getRawX();
+		float y = ev.getRawY();
+		return x >= loc[0] && x <= loc[0] + view.getWidth()
+				&& y >= loc[1] && y <= loc[1] + view.getHeight();
+	}
+
+	private void switchTestament(String target) {
+		if (target == null || target.equals(currentTestament)) return;
+		boolean searching = hasActiveSearchQuery();
+		if (!searching) {
+			saveScrollPosition(currentTestament);
+		}
+		currentTestament = target;
+		updateTabs();
+		filterBooks();
+		if (!searching) {
+			restoreScrollPosition(currentTestament);
+		}
+	}
+
+	private void saveScrollPosition(String testament) {
+		int index = binding.listview1.getFirstVisiblePosition();
+		View firstChild = binding.listview1.getChildAt(0);
+		int top = firstChild != null ? firstChild.getTop() - binding.listview1.getPaddingTop() : 0;
+		if ("ot".equals(testament)) {
+			otScrollIndex = index;
+			otScrollTop = top;
+		} else {
+			ntScrollIndex = index;
+			ntScrollTop = top;
+		}
+	}
+
+	private void restoreScrollPosition(String testament) {
+		if ("ot".equals(testament)) {
+			binding.listview1.setSelectionFromTop(otScrollIndex, otScrollTop);
+		} else {
+			binding.listview1.setSelectionFromTop(ntScrollIndex, ntScrollTop);
+		}
+	}
+
+	static String resolveSwipeTestament(
+			String currentTestament,
+			boolean hasSearchQuery,
+			float diffX,
+			float diffY,
+			float velocityX,
+			float horizontalThresholdPx,
+			float verticalLockPx,
+			float velocityThresholdPx) {
+		if (hasSearchQuery) return null;
+		if (Math.abs(diffX) > horizontalThresholdPx
+				&& Math.abs(diffY) < verticalLockPx
+				&& Math.abs(diffX) > Math.abs(diffY) * 1.3f
+				&& Math.abs(velocityX) > velocityThresholdPx) {
+			if (diffX < 0 && "ot".equals(currentTestament)) {
+				return "nt";
+			} else if (diffX > 0 && "nt".equals(currentTestament)) {
+				return "ot";
+			}
+		}
+		return null;
 	}
 
 	private void updateTabs() {
